@@ -1,0 +1,6 @@
+@My_Drive_HostAddress = http://localhost:5271
+
+GET {{My_Drive_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
