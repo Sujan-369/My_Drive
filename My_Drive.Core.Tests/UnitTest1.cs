@@ -1,11 +1,11 @@
 ﻿namespace My_Drive.Core.Tests
 {
-    public class UnitTest1
+    public class SmokeTests
     {
         [Fact]
-        public void Test1()
+        public void PipelineSmokeTest_ShouldPass()
         {
-
+            Assert.Equal(2, 1 + 1);
         }
     }
 }
