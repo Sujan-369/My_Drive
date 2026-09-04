@@ -18,4 +18,9 @@
     <Folder Include="Controllers\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\My_Drive.Core\My_Drive.Core.csproj" />
+    <ProjectReference Include="..\My_Drive.Infrastructure\My_Drive.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

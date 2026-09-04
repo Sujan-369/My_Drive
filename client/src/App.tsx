@@ -4,7 +4,7 @@ function App() {
   const [forecast, setForecast] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:5271/weatherforecast")
+    fetch("http://localhost:5271/api/ping")
       .then((res) => res.json())
       .then((data) => setForecast(data))
       .catch((err) => console.error("Fetch failed:", err));

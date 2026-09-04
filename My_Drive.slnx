@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="My_Drive.Core/My_Drive.Core.csproj" Id="564511b0-479a-4a19-bc58-56b667cf88c9" />
+  <Project Path="My_Drive.Infrastructure/My_Drive.Infrastructure.csproj" Id="46ce449b-d640-4b11-81a1-aab86efef5f0" />
   <Project Path="My_Drive/My_Drive.csproj" />
 </Solution>
