@@ -10,4 +10,9 @@
     <ProjectReference Include="..\My_Drive.Core\My_Drive.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Google.Apis.Auth" Version="1.76.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.11" />
+  </ItemGroup>
+
 </Project>
