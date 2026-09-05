@@ -1,4 +1,10 @@
 
+using Microsoft.EntityFrameworkCore;
+using My_Drive.Core.Interfaces;
+using My_Drive.Infrastructure.Auth;
+using My_Drive.Infrastructure.Data;
+using My_Drive.Auth;
+
 namespace My_Drive
 {
     public class Program
@@ -22,6 +28,11 @@ namespace My_Drive
                           .AllowAnyMethod();
                 });
             });
+
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddScoped<ICurrentOrganizationProvider, CurrentOrganizationProvider>();
 
             var app = builder.Build();
 

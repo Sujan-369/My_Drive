@@ -9,10 +9,12 @@
   <ItemGroup>
     <ProjectReference Include="..\My_Drive.Core\My_Drive.Core.csproj" />
   </ItemGroup>
-
+	
   <ItemGroup>
     <PackageReference Include="Google.Apis.Auth" Version="1.76.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.11" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
   </ItemGroup>
 
 </Project>
