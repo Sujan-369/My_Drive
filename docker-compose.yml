@@ -21,6 +21,17 @@ services:
     volumes:
       - redis_data:/data
 
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: mydrive-azurite
+    restart: unless-stopped
+    command: "azurite --blobHost 0.0.0.0 --blobPort 10000"
+    ports:
+      - "10000:10000"
+    volumes:
+      - azurite_data:/data
+
 volumes:
   postgres_data:
   redis_data:
+  azurite_data:
