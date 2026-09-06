@@ -69,6 +69,11 @@ namespace My_Drive
             builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
 
+            builder.Services.AddScoped<IFolderRepository, FolderRepository>();
+            builder.Services.AddScoped<ICurrentUserProvider, CurrentUserProvider>();
+
+            builder.Services.AddScoped<IFileRepository, FileRepository>();
+
             var app = builder.Build();
 
             app.UseCors("AllowReactClient");
