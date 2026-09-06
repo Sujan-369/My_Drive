@@ -10,7 +10,8 @@ public sealed class ApplicationDbContext(
 {
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<User> Users => Set<User>();
-
+    public DbSet<Folder> Folders => Set<Folder>();
+    public DbSet<DriveFile> DriveFiles => Set<DriveFile>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
@@ -18,6 +19,10 @@ public sealed class ApplicationDbContext(
         // The actual tenant isolation enforcement — every User query
         // is silently scoped to the current org, with no way to forget it.
         modelBuilder.Entity<User>().HasQueryFilter(u => u.OrganizationId == currentOrganizationProvider.OrganizationId);
+
+        modelBuilder.Entity<Folder>().HasQueryFilter(f => f.OrganizationId == currentOrganizationProvider.OrganizationId);
+
+        modelBuilder.Entity<DriveFile>().HasQueryFilter(f => f.OrganizationId == currentOrganizationProvider.OrganizationId);
 
         base.OnModelCreating(modelBuilder);
     }

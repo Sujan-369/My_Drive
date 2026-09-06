@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using My_Drive.Infrastructure.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace My_Drive.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260906024431_AddFolders")]
+    partial class AddFolders
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,53 +24,6 @@ namespace My_Drive.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("My_Drive.Core.Entities.DriveFile", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContentHash")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CurrentVersionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("FolderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OwnerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<long>("Size")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContentHash");
-
-                    b.HasIndex("FolderId");
-
-                    b.HasIndex("OrganizationId", "FolderId");
-
-                    b.ToTable("DriveFiles");
-                });
 
             modelBuilder.Entity("My_Drive.Core.Entities.Folder", b =>
                 {
@@ -153,51 +109,6 @@ namespace My_Drive.Infrastructure.Migrations
                     b.HasIndex("OrganizationId");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("My_Drive.Core.Entities.DriveFile", b =>
-                {
-                    b.HasOne("My_Drive.Core.Entities.Folder", null)
-                        .WithMany()
-                        .HasForeignKey("FolderId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("My_Drive.Core.Entities.Organization", null)
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.OwnsMany("My_Drive.Core.Entities.FileVersion", "Versions", b1 =>
-                        {
-                            b1.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("BlobPath")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.Property<DateTime>("CreatedAt")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.Property<Guid>("FileId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<long>("Size")
-                                .HasColumnType("bigint");
-
-                            b1.HasKey("Id");
-
-                            b1.HasIndex("FileId");
-
-                            b1.ToTable("FileVersion");
-
-                            b1.WithOwner()
-                                .HasForeignKey("FileId");
-                        });
-
-                    b.Navigation("Versions");
                 });
 
             modelBuilder.Entity("My_Drive.Core.Entities.Folder", b =>
