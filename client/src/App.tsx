@@ -1,22 +1,22 @@
-import { useEffect, useState } from "react";
+import { useState } from 'react';
+import { GoogleSignInButton } from './features/auth/GoogleSignInButton';
+import type { AuthResponse } from './features/auth/authApi';
 
 function App() {
-  const [forecast, setForecast] = useState<any[]>([]);
+  const [auth, setAuth] = useState<AuthResponse | null>(null);
 
-  useEffect(() => {
-    fetch("http://localhost:5271/api/ping")
-      .then((res) => res.json())
-      .then((data) => setForecast(data))
-      .catch((err) => console.error("Fetch failed:", err));
-  }, []);
+  const handleSignedIn = (result: AuthResponse) => {
+    setAuth(result);
+    localStorage.setItem('auth_token', result.token);
+  };
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1>My_Drive — connection test</h1>
-      {forecast.length === 0 ? (
-        <p>Loading (or nothing came back — check the console)...</p>
+    <div style={{ padding: '2rem' }}>
+      <h1>My_Drive</h1>
+      {auth ? (
+        <p>Signed in as {auth.displayName} ({auth.email})</p>
       ) : (
-        <pre>{JSON.stringify(forecast, null, 2)}</pre>
+        <GoogleSignInButton onSignedIn={handleSignedIn} />
       )}
     </div>
   );

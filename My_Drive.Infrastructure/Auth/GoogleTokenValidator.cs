@@ -7,7 +7,7 @@ namespace My_Drive.Infrastructure.Auth;
 
 public sealed class GoogleTokenValidator(IConfiguration configuration) : IGoogleTokenValidator
 {
-    private readonly string _clientId = configuration["Google:ClientId"]
+    private readonly string _clientId = configuration["Google:ClientId"]?.Trim()
         ?? throw new InvalidOperationException("Google:ClientId is not configured.");
 
     public async Task<GoogleIdentity?> ValidateAsync(string idToken)
