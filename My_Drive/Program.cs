@@ -10,6 +10,8 @@ using My_Drive.Core.Services;
 using My_Drive.Infrastructure.Auth;
 using My_Drive.Infrastructure.Data;
 using My_Drive.Infrastructure.Repositories;
+using My_Drive.Infrastructure.Storage;
+using Scalar.AspNetCore;
 using System.Text;
 
 namespace My_Drive
@@ -44,6 +46,7 @@ namespace My_Drive
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
+                options.MapInboundClaims = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -74,6 +77,8 @@ namespace My_Drive
 
             builder.Services.AddScoped<IFileRepository, FileRepository>();
 
+            builder.Services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
+
             var app = builder.Build();
 
             app.UseCors("AllowReactClient");
@@ -82,6 +87,7 @@ namespace My_Drive
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.MapScalarApiReference();
             }
 
             app.UseHttpsRedirection();
