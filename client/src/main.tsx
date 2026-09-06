@@ -6,8 +6,6 @@ import './index.css'
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
 
-console.log('[DEBUG] Client ID in use:', googleClientId);
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <GoogleOAuthProvider clientId={googleClientId}>

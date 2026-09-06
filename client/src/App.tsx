@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { GoogleSignInButton } from './features/auth/GoogleSignInButton';
 import type { AuthResponse } from './features/auth/authApi';
+import { Button } from '@/components/ui/button';
 
 function App() {
   const [auth, setAuth] = useState<AuthResponse | null>(null);
