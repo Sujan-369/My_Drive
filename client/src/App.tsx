@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { GoogleSignInButton } from './features/auth/GoogleSignInButton';
 import type { AuthResponse } from './features/auth/authApi';
+import { FileBrowser } from './features/files/FileBrowser';
 
 function App() {
   const [auth, setAuth] = useState<AuthResponse | null>(null);
@@ -14,7 +15,10 @@ function App() {
     <div style={{ padding: '2rem' }}>
       <h1>My_Drive</h1>
       {auth ? (
-        <p>Signed in as {auth.displayName} ({auth.email})</p>
+        <>
+          <p>Signed in as {auth.displayName} ({auth.email})</p>
+          <FileBrowser />
+        </>
       ) : (
         <GoogleSignInButton onSignedIn={handleSignedIn} />
       )}
