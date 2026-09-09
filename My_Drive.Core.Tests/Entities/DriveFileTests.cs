@@ -84,4 +84,48 @@ public class DriveFileTests
 
         Assert.Equal(newFolderId, file.FolderId);
     }
+
+    [Fact]
+    public void Delete_SetsIsDeletedAndDeletedAt()
+    {
+        var file = new DriveFile(OrgId, OwnerId, "report.pdf", null, "blobs/v1", 1024, "hash1");
+
+        file.Delete();
+
+        Assert.True(file.IsDeleted);
+        Assert.NotNull(file.DeletedAt);
+    }
+
+    [Fact]
+    public void Restore_ClearsIsDeletedAndDeletedAt()
+    {
+        var file = new DriveFile(OrgId, OwnerId, "report.pdf", null, "blobs/v1", 1024, "hash1");
+        file.Delete();
+
+        file.Restore();
+
+        Assert.False(file.IsDeleted);
+        Assert.Null(file.DeletedAt);
+    }
+
+    [Fact]
+    public void Star_SetsIsStarredTrue()
+    {
+        var file = new DriveFile(OrgId, OwnerId, "report.pdf", null, "blobs/v1", 1024, "hash1");
+
+        file.Star();
+
+        Assert.True(file.IsStarred);
+    }
+
+    [Fact]
+    public void Unstar_SetsIsStarredFalse()
+    {
+        var file = new DriveFile(OrgId, OwnerId, "report.pdf", null, "blobs/v1", 1024, "hash1");
+        file.Star();
+
+        file.Unstar();
+
+        Assert.False(file.IsStarred);
+    }
 }

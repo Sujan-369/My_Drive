@@ -8,4 +8,8 @@ public interface IFileRepository
     Task<IReadOnlyList<DriveFile>> GetByFolderIdAsync(Guid? folderId);
     Task AddAsync(DriveFile file);
     Task SaveChangesAsync();
+    Task<IReadOnlyList<DriveFile>> GetDeletedAsync();
+    Task<DriveFile?> GetDeletedByIdAsync(Guid id);
+    Task DeletePermanentAsync(DriveFile file);
+    Task<IReadOnlyList<DriveFile>> GetStarredAsync();
 }

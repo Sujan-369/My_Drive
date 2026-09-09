@@ -24,6 +24,10 @@ public sealed class ApplicationDbContext(
 
         modelBuilder.Entity<DriveFile>().HasQueryFilter(f => f.OrganizationId == currentOrganizationProvider.OrganizationId);
 
+        modelBuilder.Entity<Folder>().HasQueryFilter(f => f.OrganizationId == currentOrganizationProvider.OrganizationId && !f.IsDeleted);
+
+        modelBuilder.Entity<DriveFile>().HasQueryFilter(f => f.OrganizationId == currentOrganizationProvider.OrganizationId && !f.IsDeleted);
+
         base.OnModelCreating(modelBuilder);
     }
 }

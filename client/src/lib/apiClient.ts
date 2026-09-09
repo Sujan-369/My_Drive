@@ -17,9 +17,6 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
-  // Only set Content-Type for JSON bodies. FormData must NOT get this
-  // set manually — the browser generates its own boundary parameter
-  // automatically, and overriding it silently breaks multipart uploads.
   if (options.body && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
@@ -44,4 +41,5 @@ export const apiClient = {
     request<T>(path, { method: 'POST', body: body instanceof FormData ? body : JSON.stringify(body) }),
   put: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
+  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 };

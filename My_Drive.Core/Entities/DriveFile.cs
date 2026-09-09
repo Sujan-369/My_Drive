@@ -14,6 +14,9 @@ public sealed class DriveFile
     public Guid CurrentVersionId { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime ModifiedAt { get; private set; }
+    public bool IsDeleted { get; private set; }
+    public DateTime? DeletedAt { get; private set; }
+    public bool IsStarred { get; private set; }
 
     public IReadOnlyList<FileVersion> Versions => _versions;
 
@@ -84,4 +87,20 @@ public sealed class DriveFile
         FolderId = newFolderId;
         ModifiedAt = DateTime.UtcNow;
     }
+
+    public void Delete()
+    {
+        IsDeleted = true;
+        DeletedAt = DateTime.UtcNow;
+    }
+
+    public void Restore()
+    {
+        IsDeleted = false;
+        DeletedAt = null;
+    }
+
+    public void Star() => IsStarred = true;
+
+    public void Unstar() => IsStarred = false;
 }

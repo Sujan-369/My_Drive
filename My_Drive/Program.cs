@@ -11,6 +11,7 @@ using My_Drive.Infrastructure.Auth;
 using My_Drive.Infrastructure.Data;
 using My_Drive.Infrastructure.Repositories;
 using My_Drive.Infrastructure.Storage;
+using My_Drive.Infrastructure.BackgroundJobs;
 using Scalar.AspNetCore;
 using System.Text;
 
@@ -79,6 +80,8 @@ namespace My_Drive
             builder.Services.AddScoped<IFileRepository, FileRepository>();
 
             builder.Services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
+
+            builder.Services.AddHostedService<TrashPurgeService>();
 
             var app = builder.Build();
 
