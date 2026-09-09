@@ -1,15 +1,25 @@
 import { useRef, useState } from 'react';
-import { useFolders, useCreateFolder } from '../folders/useFolders';
-import { useFiles, useUploadFile } from './useFiles';
+import { motion } from 'motion/react';
+import { useFolders, useCreateFolder, useDeleteFolder, useToggleStarFolder } from '../folders/useFolders';
+import { useFiles, useUploadFile, useDeleteFile, useToggleStarFile } from './useFiles';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NewFolderDialog } from '../folders/NewFolderDialog';
-import { Folder, FileText, Upload, ChevronRight } from 'lucide-react';
+import { Folder, FileText, Upload, ChevronRight, Trash2, Star } from 'lucide-react';
 
 interface BreadcrumbEntry {
   id: string | null;
   name: string;
 }
+
+const listVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.03 } },
+};
+const itemVariants = {
+  hidden: { opacity: 0, y: 4 },
+  visible: { opacity: 1, y: 0 },
+};
 
 export function FileBrowser() {
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbEntry[]>([{ id: null, name: 'My Drive' }]);
@@ -20,6 +30,10 @@ export function FileBrowser() {
   const { data: files, isLoading: filesLoading } = useFiles(currentFolderId);
   const createFolder = useCreateFolder(currentFolderId);
   const uploadFile = useUploadFile(currentFolderId);
+  const deleteFolder = useDeleteFolder(currentFolderId);
+  const deleteFile = useDeleteFile(currentFolderId);
+  const toggleStarFolder = useToggleStarFolder(currentFolderId);
+  const toggleStarFile = useToggleStarFile(currentFolderId);
 
   const isLoading = foldersLoading || filesLoading;
   const hasContent = (folders?.length ?? 0) > 0 || (files?.length ?? 0) > 0;
@@ -83,25 +97,45 @@ export function FileBrowser() {
         )}
 
         {!isLoading && hasContent && (
-          <div className="divide-y">
+          <motion.div className="divide-y" variants={listVariants} initial="hidden" animate="visible">
             {folders?.map((folder) => (
-              <button
-                key={folder.id}
-                onClick={() => navigateInto(folder.id, folder.name)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted"
-              >
-                <Folder className="size-5 shrink-0 text-muted-foreground" />
-                <span className="truncate">{folder.name}</span>
-              </button>
+              <motion.div key={folder.id} variants={itemVariants} className="flex items-center gap-3 px-4 py-3 hover:bg-muted">
+                <button onClick={() => navigateInto(folder.id, folder.name)} className="flex flex-1 items-center gap-3 text-left">
+                  <Folder className="size-5 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{folder.name}</span>
+                </button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => toggleStarFolder.mutate({ id: folder.id, starred: folder.isStarred })}
+                  title={folder.isStarred ? 'Unstar' : 'Star'}
+                >
+                  <Star className={`size-4 ${folder.isStarred ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => deleteFolder.mutate(folder.id)} title="Delete">
+                  <Trash2 className="size-4 text-muted-foreground" />
+                </Button>
+              </motion.div>
             ))}
             {files?.map((file) => (
-              <div key={file.id} className="flex items-center gap-3 px-4 py-3">
+              <motion.div key={file.id} variants={itemVariants} className="flex items-center gap-3 px-4 py-3">
                 <FileText className="size-5 shrink-0 text-muted-foreground" />
                 <span className="flex-1 truncate">{file.name}</span>
                 <span className="shrink-0 text-xs text-muted-foreground">{formatSize(file.size)}</span>
-              </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => toggleStarFile.mutate({ id: file.id, starred: file.isStarred })}
+                  title={file.isStarred ? 'Unstar' : 'Star'}
+                >
+                  <Star className={`size-4 ${file.isStarred ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => deleteFile.mutate(file.id)} title="Delete">
+                  <Trash2 className="size-4 text-muted-foreground" />
+                </Button>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

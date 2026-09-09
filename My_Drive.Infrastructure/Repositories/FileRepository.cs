@@ -5,7 +5,9 @@ using My_Drive.Infrastructure.Data;
 
 namespace My_Drive.Infrastructure.Repositories;
 
-public sealed class FileRepository(ApplicationDbContext dbContext) : IFileRepository
+public sealed class FileRepository(
+    ApplicationDbContext dbContext,
+    ICurrentOrganizationProvider currentOrganizationProvider) : IFileRepository
 {
     public async Task<DriveFile?> GetByIdAsync(Guid id) =>
         await dbContext.DriveFiles.FirstOrDefaultAsync(f => f.Id == id);
@@ -23,4 +25,30 @@ public sealed class FileRepository(ApplicationDbContext dbContext) : IFileReposi
     }
 
     public async Task SaveChangesAsync() => await dbContext.SaveChangesAsync();
+
+    public async Task<IReadOnlyList<DriveFile>> GetDeletedAsync() =>
+        await dbContext.DriveFiles
+            .IgnoreQueryFilters()
+            .Where(f => f.OrganizationId == currentOrganizationProvider.OrganizationId && f.IsDeleted)
+            .OrderByDescending(f => f.DeletedAt)
+            .ToListAsync();
+
+    public async Task<DriveFile?> GetDeletedByIdAsync(Guid id) =>
+        await dbContext.DriveFiles
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(f => f.Id == id
+                && f.OrganizationId == currentOrganizationProvider.OrganizationId
+                && f.IsDeleted);
+
+    public async Task DeletePermanentAsync(DriveFile file)
+    {
+        dbContext.DriveFiles.Remove(file);
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async Task<IReadOnlyList<DriveFile>> GetStarredAsync() =>
+        await dbContext.DriveFiles
+            .Where(f => f.IsStarred)
+            .OrderBy(f => f.Name)
+            .ToListAsync();
 }

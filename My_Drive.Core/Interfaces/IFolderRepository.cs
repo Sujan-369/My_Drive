@@ -8,4 +8,8 @@ public interface IFolderRepository
     Task<IReadOnlyList<Folder>> GetByParentIdAsync(Guid? parentFolderId);
     Task AddAsync(Folder folder);
     Task SaveChangesAsync();
+    Task<IReadOnlyList<Folder>> GetDeletedAsync();
+    Task<Folder?> GetDeletedByIdAsync(Guid id);
+    Task DeletePermanentAsync(Folder folder);
+    Task<IReadOnlyList<Folder>> GetStarredAsync();
 }

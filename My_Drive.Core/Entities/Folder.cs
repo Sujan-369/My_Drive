@@ -9,6 +9,9 @@ public sealed class Folder
     public string Name { get; private set; } = null!;
     public DateTime CreatedAt { get; private set; }
     public DateTime ModifiedAt { get; private set; }
+    public bool IsDeleted { get; private set; }
+    public DateTime? DeletedAt { get; private set; }
+    public bool IsStarred { get; private set; }
 
     private Folder() { }
 
@@ -57,4 +60,20 @@ public sealed class Folder
         ParentFolderId = newParentFolderId;
         ModifiedAt = DateTime.UtcNow;
     }
+
+    public void Delete()
+    {
+        IsDeleted = true;
+        DeletedAt = DateTime.UtcNow;
+    }
+
+    public void Restore()
+    {
+        IsDeleted = false;
+        DeletedAt = null;
+    }
+
+    public void Star() => IsStarred = true;
+
+    public void Unstar() => IsStarred = false;
 }

@@ -26,6 +26,20 @@ public sealed class FoldersController(
         return folder is null ? NotFound() : Ok(ToResponse(folder));
     }
 
+    [HttpGet("trash")]
+    public async Task<ActionResult<IReadOnlyList<FolderResponse>>> GetTrash()
+    {
+        var folders = await folderRepository.GetDeletedAsync();
+        return Ok(folders.Select(ToResponse));
+    }
+
+    [HttpGet("starred")]
+    public async Task<ActionResult<IReadOnlyList<FolderResponse>>> GetStarred()
+    {
+        var folders = await folderRepository.GetStarredAsync();
+        return Ok(folders.Select(ToResponse));
+    }
+
     [HttpPost]
     public async Task<ActionResult<FolderResponse>> Create([FromBody] CreateFolderRequest request)
     {
@@ -56,6 +70,60 @@ public sealed class FoldersController(
         return Ok(ToResponse(folder));
     }
 
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var folder = await folderRepository.GetByIdAsync(id);
+        if (folder is null) return NotFound();
+
+        folder.Delete();
+        await folderRepository.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpPut("{id:guid}/restore")]
+    public async Task<ActionResult<FolderResponse>> Restore(Guid id)
+    {
+        var folder = await folderRepository.GetDeletedByIdAsync(id);
+        if (folder is null) return NotFound();
+
+        folder.Restore();
+        await folderRepository.SaveChangesAsync();
+        return Ok(ToResponse(folder));
+    }
+
+    [HttpDelete("{id:guid}/permanent")]
+    public async Task<IActionResult> DeletePermanent(Guid id)
+    {
+        var folder = await folderRepository.GetDeletedByIdAsync(id);
+        if (folder is null) return NotFound();
+
+        await folderRepository.DeletePermanentAsync(folder);
+        return NoContent();
+    }
+
+    [HttpPut("{id:guid}/star")]
+    public async Task<ActionResult<FolderResponse>> Star(Guid id)
+    {
+        var folder = await folderRepository.GetByIdAsync(id);
+        if (folder is null) return NotFound();
+
+        folder.Star();
+        await folderRepository.SaveChangesAsync();
+        return Ok(ToResponse(folder));
+    }
+
+    [HttpPut("{id:guid}/unstar")]
+    public async Task<ActionResult<FolderResponse>> Unstar(Guid id)
+    {
+        var folder = await folderRepository.GetByIdAsync(id);
+        if (folder is null) return NotFound();
+
+        folder.Unstar();
+        await folderRepository.SaveChangesAsync();
+        return Ok(ToResponse(folder));
+    }
+
     private static FolderResponse ToResponse(Folder folder) =>
-        new(folder.Id, folder.Name, folder.ParentFolderId, folder.CreatedAt, folder.ModifiedAt);
+        new(folder.Id, folder.Name, folder.ParentFolderId, folder.CreatedAt, folder.ModifiedAt, folder.DeletedAt, folder.IsStarred);
 }

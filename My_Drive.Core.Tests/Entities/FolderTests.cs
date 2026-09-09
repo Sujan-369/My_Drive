@@ -78,4 +78,48 @@ public class FolderTests
 
         Assert.Equal(newParentId, folder.ParentFolderId);
     }
+
+    [Fact]
+    public void Delete_SetsIsDeletedAndDeletedAt()
+    {
+        var folder = new Folder(OrgId, OwnerId, "Documents");
+
+        folder.Delete();
+
+        Assert.True(folder.IsDeleted);
+        Assert.NotNull(folder.DeletedAt);
+    }
+
+    [Fact]
+    public void Restore_ClearsIsDeletedAndDeletedAt()
+    {
+        var folder = new Folder(OrgId, OwnerId, "Documents");
+        folder.Delete();
+
+        folder.Restore();
+
+        Assert.False(folder.IsDeleted);
+        Assert.Null(folder.DeletedAt);
+    }
+
+    [Fact]
+    public void Star_SetsIsStarredTrue()
+    {
+        var folder = new Folder(OrgId, OwnerId, "Documents");
+
+        folder.Star();
+
+        Assert.True(folder.IsStarred);
+    }
+
+    [Fact]
+    public void Unstar_SetsIsStarredFalse()
+    {
+        var folder = new Folder(OrgId, OwnerId, "Documents");
+        folder.Star();
+
+        folder.Unstar();
+
+        Assert.False(folder.IsStarred);
+    }
 }

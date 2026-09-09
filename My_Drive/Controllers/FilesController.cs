@@ -30,8 +30,22 @@ public sealed class FilesController(
         return file is null ? NotFound() : Ok(ToResponse(file));
     }
 
+    [HttpGet("trash")]
+    public async Task<ActionResult<IReadOnlyList<FileResponse>>> GetTrash()
+    {
+        var files = await fileRepository.GetDeletedAsync();
+        return Ok(files.Select(ToResponse));
+    }
+
+    [HttpGet("starred")]
+    public async Task<ActionResult<IReadOnlyList<FileResponse>>> GetStarred()
+    {
+        var files = await fileRepository.GetStarredAsync();
+        return Ok(files.Select(ToResponse));
+    }
+
     [HttpPost]
-    [RequestSizeLimit(100_000_000)] // placeholder — belongs in appsettings, revisit later
+    [RequestSizeLimit(100_000_000)]
     public async Task<ActionResult<FileResponse>> Upload([FromForm] UploadFileRequest request)
     {
         if (request.FolderId is not null)
@@ -102,6 +116,64 @@ public sealed class FilesController(
         return Ok(ToResponse(file));
     }
 
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var file = await fileRepository.GetByIdAsync(id);
+        if (file is null) return NotFound();
+
+        file.Delete();
+        await fileRepository.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpPut("{id:guid}/restore")]
+    public async Task<ActionResult<FileResponse>> Restore(Guid id)
+    {
+        var file = await fileRepository.GetDeletedByIdAsync(id);
+        if (file is null) return NotFound();
+
+        file.Restore();
+        await fileRepository.SaveChangesAsync();
+        return Ok(ToResponse(file));
+    }
+
+    [HttpDelete("{id:guid}/permanent")]
+    public async Task<IActionResult> DeletePermanent(Guid id)
+    {
+        var file = await fileRepository.GetDeletedByIdAsync(id);
+        if (file is null) return NotFound();
+
+        foreach (var version in file.Versions)
+        {
+            await blobStorageService.DeleteAsync(version.BlobPath);
+        }
+        await fileRepository.DeletePermanentAsync(file);
+        return NoContent();
+    }
+
+    [HttpPut("{id:guid}/star")]
+    public async Task<ActionResult<FileResponse>> Star(Guid id)
+    {
+        var file = await fileRepository.GetByIdAsync(id);
+        if (file is null) return NotFound();
+
+        file.Star();
+        await fileRepository.SaveChangesAsync();
+        return Ok(ToResponse(file));
+    }
+
+    [HttpPut("{id:guid}/unstar")]
+    public async Task<ActionResult<FileResponse>> Unstar(Guid id)
+    {
+        var file = await fileRepository.GetByIdAsync(id);
+        if (file is null) return NotFound();
+
+        file.Unstar();
+        await fileRepository.SaveChangesAsync();
+        return Ok(ToResponse(file));
+    }
+
     private static FileResponse ToResponse(DriveFile file) =>
-        new(file.Id, file.Name, file.FolderId, file.Size, file.ContentHash, file.CreatedAt, file.ModifiedAt);
+        new(file.Id, file.Name, file.FolderId, file.Size, file.ContentHash, file.CreatedAt, file.ModifiedAt, file.DeletedAt, file.IsStarred);
 }
