@@ -8,10 +8,11 @@ using My_Drive.Auth;
 using My_Drive.Core.Interfaces;
 using My_Drive.Core.Services;
 using My_Drive.Infrastructure.Auth;
+using My_Drive.Infrastructure.BackgroundJobs;
 using My_Drive.Infrastructure.Data;
 using My_Drive.Infrastructure.Repositories;
+using My_Drive.Infrastructure.Services;
 using My_Drive.Infrastructure.Storage;
-using My_Drive.Infrastructure.BackgroundJobs;
 using Scalar.AspNetCore;
 using System.Text;
 
@@ -76,6 +77,9 @@ namespace My_Drive
 
             builder.Services.AddScoped<IFolderRepository, FolderRepository>();
             builder.Services.AddScoped<ICurrentUserProvider, CurrentUserProvider>();
+
+            builder.Services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
+            builder.Services.AddScoped<IActivityLogger, ActivityLogger>();
 
             builder.Services.AddScoped<IFileRepository, FileRepository>();
 

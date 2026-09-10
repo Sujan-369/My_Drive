@@ -12,6 +12,8 @@ public sealed class ApplicationDbContext(
     public DbSet<User> Users => Set<User>();
     public DbSet<Folder> Folders => Set<Folder>();
     public DbSet<DriveFile> DriveFiles => Set<DriveFile>();
+    public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
@@ -27,6 +29,8 @@ public sealed class ApplicationDbContext(
         modelBuilder.Entity<Folder>().HasQueryFilter(f => f.OrganizationId == currentOrganizationProvider.OrganizationId && !f.IsDeleted);
 
         modelBuilder.Entity<DriveFile>().HasQueryFilter(f => f.OrganizationId == currentOrganizationProvider.OrganizationId && !f.IsDeleted);
+
+        modelBuilder.Entity<ActivityLog>().HasQueryFilter(l => l.OrganizationId == currentOrganizationProvider.OrganizationId);
 
         base.OnModelCreating(modelBuilder);
     }
