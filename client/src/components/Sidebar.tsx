@@ -1,6 +1,6 @@
 import { Home, FolderOpen, Users, Clock, Star, Trash2 } from 'lucide-react';
 
-export type View = 'home' | 'my-drive' | 'recent' |'trash' | 'starred';
+export type View = 'home' | 'my-drive' | 'recent' | 'search' | 'trash' | 'starred';
 
 interface NavItem {
   view: View;

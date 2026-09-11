@@ -7,12 +7,14 @@ import type { AuthResponse } from './features/auth/authApi';
 import { FileBrowser } from './features/files/FileBrowser';
 import { TrashScreen } from './features/trash/TrashScreen';
 import { StarredScreen } from './features/starred/StarredScreen';
-import { HomeScreen } from  './features/home/HomeScreen';
-import { RecentScreen} from './features/recent/RecentScreen';
+import { HomeScreen } from './features/home/HomeScreen';
+import { RecentScreen } from './features/recent/RecentScreen';
+import { SearchScreen } from './features/search/SearchScreen';
 
 function App() {
   const [auth, setAuth] = useState<AuthResponse | null>(null);
   const [view, setView] = useState<View>('home');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleSignedIn = (result: AuthResponse) => {
     setAuth(result);
@@ -24,12 +26,18 @@ function App() {
     setAuth(null);
   };
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setView('search');
+  };
+
   const renderView = () => {
-  if (view === 'home') return <HomeScreen />;
-  if (view === 'trash') return <TrashScreen />;
-  if (view === 'starred') return <StarredScreen />;
-  if (view === 'recent') return <RecentScreen />;
-  return <FileBrowser />;
+    if (view === 'search') return <SearchScreen query={searchQuery} />;
+    if (view === 'home') return <HomeScreen />;
+    if (view === 'trash') return <TrashScreen />;
+    if (view === 'starred') return <StarredScreen />;
+    if (view === 'recent') return <RecentScreen />;
+    return <FileBrowser />;
   };
 
   return (
@@ -40,7 +48,7 @@ function App() {
         </motion.div>
       ) : (
         <motion.div key="app" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
-          <AppShell userName={auth.displayName} userEmail={auth.email} onSignOut={handleSignOut}>
+          <AppShell userName={auth.displayName} userEmail={auth.email} onSignOut={handleSignOut} onSearch={handleSearch}>
             <div className="flex gap-6">
               <Sidebar activeView={view} onNavigate={setView} />
               <div className="flex-1">{renderView()}</div>

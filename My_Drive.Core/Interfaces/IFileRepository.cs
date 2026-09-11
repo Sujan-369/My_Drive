@@ -14,4 +14,5 @@ public interface IFileRepository
     Task<IReadOnlyList<DriveFile>> GetStarredAsync();
     Task<long> GetTotalSizeAsync();
     Task<IReadOnlyList<DriveFile>> GetRecentAsync(int take);
+    Task<IReadOnlyList<DriveFile>> SearchAsync(string term);
 }
