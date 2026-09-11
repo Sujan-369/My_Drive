@@ -7,10 +7,12 @@ import type { AuthResponse } from './features/auth/authApi';
 import { FileBrowser } from './features/files/FileBrowser';
 import { TrashScreen } from './features/trash/TrashScreen';
 import { StarredScreen } from './features/starred/StarredScreen';
+import { HomeScreen } from  './features/home/HomeScreen';
+import { RecentScreen} from './features/recent/RecentScreen';
 
 function App() {
   const [auth, setAuth] = useState<AuthResponse | null>(null);
-  const [view, setView] = useState<View>('my-drive');
+  const [view, setView] = useState<View>('home');
 
   const handleSignedIn = (result: AuthResponse) => {
     setAuth(result);
@@ -23,9 +25,11 @@ function App() {
   };
 
   const renderView = () => {
-    if (view === 'trash') return <TrashScreen />;
-    if (view === 'starred') return <StarredScreen />;
-    return <FileBrowser />;
+  if (view === 'home') return <HomeScreen />;
+  if (view === 'trash') return <TrashScreen />;
+  if (view === 'starred') return <StarredScreen />;
+  if (view === 'recent') return <RecentScreen />;
+  return <FileBrowser />;
   };
 
   return (

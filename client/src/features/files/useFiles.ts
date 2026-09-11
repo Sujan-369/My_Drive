@@ -62,3 +62,7 @@ export function useToggleStarFile(folderId: string | null) {
     },
   });
 }
+
+export function useRecentFiles(take = 10) {
+  return useQuery({ queryKey: ['files', 'recent', take], queryFn: () => filesApi.getRecent(take) });
+}

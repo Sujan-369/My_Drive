@@ -1,6 +1,6 @@
 import { Home, FolderOpen, Users, Clock, Star, Trash2 } from 'lucide-react';
 
-export type View = 'my-drive' | 'trash' | 'starred';
+export type View = 'home' | 'my-drive' | 'recent' |'trash' | 'starred';
 
 interface NavItem {
   view: View;
@@ -10,10 +10,10 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { view: 'my-drive' as View, label: 'Home', icon: Home, enabled: false },
+  { view: 'home', label: 'Home', icon: Home, enabled: true },
   { view: 'my-drive', label: 'My Drive', icon: FolderOpen, enabled: true },
   { view: 'my-drive' as View, label: 'Shared with me', icon: Users, enabled: false },
-  { view: 'my-drive' as View, label: 'Recent', icon: Clock, enabled: false },
+  { view: 'recent', label: 'Recent', icon: Clock, enabled: true },
   { view: 'starred', label: 'Starred', icon: Star, enabled: true },
   { view: 'trash', label: 'Trash', icon: Trash2, enabled: true },
 ];
