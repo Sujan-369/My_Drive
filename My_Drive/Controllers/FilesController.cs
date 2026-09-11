@@ -14,10 +14,13 @@ public sealed class FilesController(
     IFolderRepository folderRepository,
     IBlobStorageService blobStorageService,
     ICurrentOrganizationProvider currentOrganizationProvider,
-    ICurrentUserProvider currentUserProvider) : ControllerBase
+    ICurrentUserProvider currentUserProvider
+) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<FileResponse>>> GetByFolder([FromQuery] Guid? folderId)
+    public async Task<ActionResult<IReadOnlyList<FileResponse>>> GetByFolder(
+        [FromQuery] Guid? folderId
+    )
     {
         var files = await fileRepository.GetByFolderIdAsync(folderId);
         return Ok(files.Select(ToResponse));
@@ -70,7 +73,15 @@ public sealed class FilesController(
 
         await blobStorageService.UploadAsync(buffered, blobPath, request.File.ContentType);
 
-        var file = new DriveFile(orgId, currentUserProvider.UserId, request.File.FileName, request.FolderId, blobPath, request.File.Length, contentHash);
+        var file = new DriveFile(
+            orgId,
+            currentUserProvider.UserId,
+            request.File.FileName,
+            request.FolderId,
+            blobPath,
+            request.File.Length,
+            contentHash
+        );
         await fileRepository.AddAsync(file);
 
         return CreatedAtAction(nameof(GetById), new { id = file.Id }, ToResponse(file));
@@ -80,7 +91,8 @@ public sealed class FilesController(
     public async Task<IActionResult> Download(Guid id)
     {
         var file = await fileRepository.GetByIdAsync(id);
-        if (file is null) return NotFound();
+        if (file is null)
+            return NotFound();
 
         var currentVersion = file.Versions.First(v => v.Id == file.CurrentVersionId);
         var content = await blobStorageService.DownloadAsync(currentVersion.BlobPath);
@@ -95,10 +107,14 @@ public sealed class FilesController(
     }
 
     [HttpPut("{id:guid}/rename")]
-    public async Task<ActionResult<FileResponse>> Rename(Guid id, [FromBody] RenameFileRequest request)
+    public async Task<ActionResult<FileResponse>> Rename(
+        Guid id,
+        [FromBody] RenameFileRequest request
+    )
     {
         var file = await fileRepository.GetByIdAsync(id);
-        if (file is null) return NotFound();
+        if (file is null)
+            return NotFound();
 
         file.Rename(request.Name);
         await fileRepository.SaveChangesAsync();
@@ -109,7 +125,8 @@ public sealed class FilesController(
     public async Task<ActionResult<FileResponse>> Move(Guid id, [FromBody] MoveFileRequest request)
     {
         var file = await fileRepository.GetByIdAsync(id);
-        if (file is null) return NotFound();
+        if (file is null)
+            return NotFound();
 
         file.MoveTo(request.NewFolderId);
         await fileRepository.SaveChangesAsync();
@@ -120,7 +137,8 @@ public sealed class FilesController(
     public async Task<IActionResult> Delete(Guid id)
     {
         var file = await fileRepository.GetByIdAsync(id);
-        if (file is null) return NotFound();
+        if (file is null)
+            return NotFound();
 
         file.Delete();
         await fileRepository.SaveChangesAsync();
@@ -131,7 +149,8 @@ public sealed class FilesController(
     public async Task<ActionResult<FileResponse>> Restore(Guid id)
     {
         var file = await fileRepository.GetDeletedByIdAsync(id);
-        if (file is null) return NotFound();
+        if (file is null)
+            return NotFound();
 
         file.Restore();
         await fileRepository.SaveChangesAsync();
@@ -142,7 +161,8 @@ public sealed class FilesController(
     public async Task<IActionResult> DeletePermanent(Guid id)
     {
         var file = await fileRepository.GetDeletedByIdAsync(id);
-        if (file is null) return NotFound();
+        if (file is null)
+            return NotFound();
 
         foreach (var version in file.Versions)
         {
@@ -156,7 +176,8 @@ public sealed class FilesController(
     public async Task<ActionResult<FileResponse>> Star(Guid id)
     {
         var file = await fileRepository.GetByIdAsync(id);
-        if (file is null) return NotFound();
+        if (file is null)
+            return NotFound();
 
         file.Star();
         await fileRepository.SaveChangesAsync();
@@ -167,13 +188,33 @@ public sealed class FilesController(
     public async Task<ActionResult<FileResponse>> Unstar(Guid id)
     {
         var file = await fileRepository.GetByIdAsync(id);
-        if (file is null) return NotFound();
+        if (file is null)
+            return NotFound();
 
         file.Unstar();
         await fileRepository.SaveChangesAsync();
         return Ok(ToResponse(file));
     }
 
+    [HttpGet("recent")]
+    public async Task<ActionResult<IReadOnlyList<FileResponse>>> GetRecent(
+        [FromQuery] int take = 10
+    )
+    {
+        var files = await fileRepository.GetRecentAsync(take);
+        return Ok(files.Select(ToResponse));
+    }
+
     private static FileResponse ToResponse(DriveFile file) =>
-        new(file.Id, file.Name, file.FolderId, file.Size, file.ContentHash, file.CreatedAt, file.ModifiedAt, file.DeletedAt, file.IsStarred);
+        new(
+            file.Id,
+            file.Name,
+            file.FolderId,
+            file.Size,
+            file.ContentHash,
+            file.CreatedAt,
+            file.ModifiedAt,
+            file.DeletedAt,
+            file.IsStarred
+        );
 }
