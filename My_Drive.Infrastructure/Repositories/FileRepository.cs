@@ -58,4 +58,10 @@ public sealed class FileRepository(
 
     public async Task<IReadOnlyList<DriveFile>> GetRecentAsync(int take) =>
         await dbContext.DriveFiles.OrderByDescending(f => f.ModifiedAt).Take(take).ToListAsync();
+
+    public async Task<IReadOnlyList<DriveFile>> SearchAsync(string term) =>
+        await dbContext
+            .DriveFiles.Where(f => EF.Functions.ILike(f.Name, $"%{term}%"))
+            .OrderByDescending(f => f.ModifiedAt)
+            .ToListAsync();
 }

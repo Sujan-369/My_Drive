@@ -12,4 +12,5 @@ public interface IFolderRepository
     Task<Folder?> GetDeletedByIdAsync(Guid id);
     Task DeletePermanentAsync(Folder folder);
     Task<IReadOnlyList<Folder>> GetStarredAsync();
+    Task<IReadOnlyList<Folder>> SearchAsync(string term);
 }
