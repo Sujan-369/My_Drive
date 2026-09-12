@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using My_Drive.Contracts.Folders;
+using My_Drive.Contracts.Sharing;
 using My_Drive.Core.Entities;
 using My_Drive.Core.Interfaces;
+using My_Drive.Infrastructure.Repositories;
 
 namespace My_Drive.Controllers;
 
@@ -11,7 +13,9 @@ public sealed class FoldersController(
     IFolderRepository folderRepository,
     ICurrentOrganizationProvider currentOrganizationProvider,
     ICurrentUserProvider currentUserProvider,
-    IActivityLogger activityLogger
+    IActivityLogger activityLogger,
+    IShareRepository shareRepository,
+    IUserRepository userRepository
 ) : ControllerBase
 {
     [HttpGet]
@@ -186,6 +190,58 @@ public sealed class FoldersController(
             folder.Name
         );
         return Ok(ToResponse(folder));
+    }
+
+    [HttpPost("{id:guid}/share")]
+    public async Task<ActionResult<ShareResponse>> Share(
+        Guid id,
+        [FromBody] CreateShareRequest request
+    )
+    {
+        var folder = await folderRepository.GetByIdAsync(id);
+        if (folder is null)
+            return NotFound();
+
+        var recipient = await userRepository.GetByEmailAsync(request.RecipientEmail);
+        if (recipient is null)
+            return BadRequest("No user found with that email.");
+
+        if (
+            !Enum.TryParse<SharePermission>(
+                request.Permission,
+                ignoreCase: true,
+                out var permission
+            )
+        )
+        {
+            return BadRequest("Permission must be 'Viewer' or 'Editor'.");
+        }
+
+        var share = new Share(
+            ShareResourceType.Folder,
+            folder.Id,
+            currentUserProvider.UserId,
+            recipient.Id,
+            permission
+        );
+        await shareRepository.AddAsync(share);
+        await activityLogger.LogAsync(
+            ActivityAction.Shared,
+            ActivityResourceType.Folder,
+            folder.Id,
+            folder.Name
+        );
+
+        return Ok(
+            new ShareResponse(
+                share.Id,
+                folder.Id,
+                "Folder",
+                request.RecipientEmail,
+                permission.ToString(),
+                share.CreatedAt
+            )
+        );
     }
 
     private static FolderResponse ToResponse(Folder folder) =>

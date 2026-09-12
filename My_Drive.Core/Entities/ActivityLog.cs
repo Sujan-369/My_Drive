@@ -9,13 +9,14 @@ public enum ActivityAction
     Deleted,
     Restored,
     Starred,
-    Unstarred
+    Unstarred,
+    Shared,
 }
 
 public enum ActivityResourceType
 {
     Folder,
-    File
+    File,
 }
 
 public sealed class ActivityLog
@@ -31,11 +32,21 @@ public sealed class ActivityLog
 
     private ActivityLog() { }
 
-    public ActivityLog(Guid organizationId, Guid actorId, ActivityAction action, ActivityResourceType resourceType, Guid resourceId, string resourceName)
+    public ActivityLog(
+        Guid organizationId,
+        Guid actorId,
+        ActivityAction action,
+        ActivityResourceType resourceType,
+        Guid resourceId,
+        string resourceName
+    )
     {
         if (organizationId == Guid.Empty)
         {
-            throw new ArgumentException("ActivityLog must belong to a valid Organization.", nameof(organizationId));
+            throw new ArgumentException(
+                "ActivityLog must belong to a valid Organization.",
+                nameof(organizationId)
+            );
         }
         if (actorId == Guid.Empty)
         {

@@ -2,8 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using My_Drive.Contracts.Files;
+using My_Drive.Contracts.Sharing;
 using My_Drive.Core.Entities;
 using My_Drive.Core.Interfaces;
+using My_Drive.Infrastructure.Repositories;
+using My_Drive.Infrastructure.Services;
 
 namespace My_Drive.Controllers;
 
@@ -14,7 +17,10 @@ public sealed class FilesController(
     IFolderRepository folderRepository,
     IBlobStorageService blobStorageService,
     ICurrentOrganizationProvider currentOrganizationProvider,
-    ICurrentUserProvider currentUserProvider
+    ICurrentUserProvider currentUserProvider,
+    IActivityLogger activityLogger,
+    IShareRepository shareRepository,
+    IUserRepository userRepository
 ) : ControllerBase
 {
     [HttpGet]
@@ -203,6 +209,58 @@ public sealed class FilesController(
     {
         var files = await fileRepository.GetRecentAsync(take);
         return Ok(files.Select(ToResponse));
+    }
+
+    [HttpPost("{id:guid}/share")]
+    public async Task<ActionResult<ShareResponse>> Share(
+        Guid id,
+        [FromBody] CreateShareRequest request
+    )
+    {
+        var file = await fileRepository.GetByIdAsync(id);
+        if (file is null)
+            return NotFound();
+
+        var recipient = await userRepository.GetByEmailAsync(request.RecipientEmail);
+        if (recipient is null)
+            return BadRequest("No user found with that email.");
+
+        if (
+            !Enum.TryParse<SharePermission>(
+                request.Permission,
+                ignoreCase: true,
+                out var permission
+            )
+        )
+        {
+            return BadRequest("Permission must be 'Viewer' or 'Editor'.");
+        }
+
+        var share = new Share(
+            ShareResourceType.File,
+            file.Id,
+            currentUserProvider.UserId,
+            recipient.Id,
+            permission
+        );
+        await shareRepository.AddAsync(share);
+        await activityLogger.LogAsync(
+            ActivityAction.Shared,
+            ActivityResourceType.File,
+            file.Id,
+            file.Name
+        );
+
+        return Ok(
+            new ShareResponse(
+                share.Id,
+                file.Id,
+                "File",
+                request.RecipientEmail,
+                permission.ToString(),
+                share.CreatedAt
+            )
+        );
     }
 
     private static FileResponse ToResponse(DriveFile file) =>

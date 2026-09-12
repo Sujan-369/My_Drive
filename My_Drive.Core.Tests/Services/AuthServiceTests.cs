@@ -11,7 +11,9 @@ public class AuthServiceTests
     [Fact]
     public async Task SignIn_FirstTimeUser_CreatesOneOrganizationAndOneUser()
     {
-        var tokenValidator = new FakeTokenValidator(new GoogleIdentity("sub-123", "a@b.com", "Alice"));
+        var tokenValidator = new FakeTokenValidator(
+            new GoogleIdentity("sub-123", "a@b.com", "Alice")
+        );
         var userRepo = new FakeUserRepository();
         var orgRepo = new FakeOrganizationRepository();
         var sut = new AuthService(tokenValidator, userRepo, orgRepo);
@@ -44,9 +46,15 @@ public class AuthServiceTests
     public async Task SignIn_InvalidToken_Throws()
     {
         var tokenValidator = new FakeTokenValidator(null);
-        var sut = new AuthService(tokenValidator, new FakeUserRepository(), new FakeOrganizationRepository());
+        var sut = new AuthService(
+            tokenValidator,
+            new FakeUserRepository(),
+            new FakeOrganizationRepository()
+        );
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.SignInWithGoogleAsync("bad-token"));
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            sut.SignInWithGoogleAsync("bad-token")
+        );
     }
 
     private sealed class FakeTokenValidator(GoogleIdentity? identity) : IGoogleTokenValidator
@@ -57,8 +65,13 @@ public class AuthServiceTests
     private sealed class FakeUserRepository : IUserRepository
     {
         public List<User> Saved { get; } = [];
+
         public Task<User?> GetByGoogleSubjectIdAsync(string googleSubjectId) =>
             Task.FromResult(Saved.FirstOrDefault(u => u.GoogleSubjectId == googleSubjectId));
+
+        public Task<User?> GetByEmailAsync(string email) =>
+            Task.FromResult(Saved.FirstOrDefault(u => u.Email == email));
+
         public Task AddAsync(User user)
         {
             Saved.Add(user);
@@ -69,6 +82,7 @@ public class AuthServiceTests
     private sealed class FakeOrganizationRepository : IOrganizationRepository
     {
         public List<Organization> Saved { get; } = [];
+
         public Task AddAsync(Organization organization)
         {
             Saved.Add(organization);

@@ -1,4 +1,4 @@
-
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -14,7 +14,6 @@ using My_Drive.Infrastructure.Repositories;
 using My_Drive.Infrastructure.Services;
 using My_Drive.Infrastructure.Storage;
 using Scalar.AspNetCore;
-using System.Text;
 
 namespace My_Drive
 {
@@ -28,7 +27,6 @@ namespace My_Drive
 
             builder.Services.AddControllers(options =>
             {
-
                 var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
                 options.Filters.Add(new AuthorizeFilter(policy));
             });
@@ -38,36 +36,44 @@ namespace My_Drive
 
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowReactClient", policy =>
-                {
-                    policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
-                });
+                options.AddPolicy(
+                    "AllowReactClient",
+                    policy =>
+                    {
+                        policy
+                            .WithOrigins("http://localhost:5173", "http://localhost:5174")
+                            .AllowAnyHeader()
+                            .AllowAnyMethod();
+                    }
+                );
             });
 
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.MapInboundClaims = false;
-                options.TokenValidationParameters = new TokenValidationParameters
+            builder
+                .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
                 {
-                    ValidateIssuer = true,
-                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                    ValidateAudience = true,
-                    ValidAudience = builder.Configuration["Jwt:Audience"],
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
-                };
-            });
+                    options.MapInboundClaims = false;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                        ValidateAudience = true,
+                        ValidAudience = builder.Configuration["Jwt:Audience"],
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
+                        ),
+                    };
+                });
 
             builder.Services.AddAuthorization();
             builder.Services.AddScoped<ITokenService, JwtTokenService>();
 
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+            );
             builder.Services.AddScoped<ICurrentOrganizationProvider, CurrentOrganizationProvider>();
 
             builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
@@ -80,6 +86,8 @@ namespace My_Drive
 
             builder.Services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
             builder.Services.AddScoped<IActivityLogger, ActivityLogger>();
+
+            builder.Services.AddScoped<IShareRepository, ShareRepository>();
 
             builder.Services.AddScoped<IFileRepository, FileRepository>();
 
@@ -101,7 +109,6 @@ namespace My_Drive
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 
