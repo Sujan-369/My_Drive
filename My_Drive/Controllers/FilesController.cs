@@ -5,8 +5,6 @@ using My_Drive.Contracts.Files;
 using My_Drive.Contracts.Sharing;
 using My_Drive.Core.Entities;
 using My_Drive.Core.Interfaces;
-using My_Drive.Infrastructure.Repositories;
-using My_Drive.Infrastructure.Services;
 
 namespace My_Drive.Controllers;
 
@@ -19,6 +17,7 @@ public sealed class FilesController(
     ICurrentOrganizationProvider currentOrganizationProvider,
     ICurrentUserProvider currentUserProvider,
     IActivityLogger activityLogger,
+    IPermissionService permissionService,
     IShareRepository shareRepository,
     IUserRepository userRepository
 ) : ControllerBase
@@ -50,6 +49,15 @@ public sealed class FilesController(
     public async Task<ActionResult<IReadOnlyList<FileResponse>>> GetStarred()
     {
         var files = await fileRepository.GetStarredAsync();
+        return Ok(files.Select(ToResponse));
+    }
+
+    [HttpGet("recent")]
+    public async Task<ActionResult<IReadOnlyList<FileResponse>>> GetRecent(
+        [FromQuery] int take = 10
+    )
+    {
+        var files = await fileRepository.GetRecentAsync(take);
         return Ok(files.Select(ToResponse));
     }
 
@@ -89,6 +97,12 @@ public sealed class FilesController(
             contentHash
         );
         await fileRepository.AddAsync(file);
+        await activityLogger.LogAsync(
+            ActivityAction.Uploaded,
+            ActivityResourceType.File,
+            file.Id,
+            file.Name
+        );
 
         return CreatedAtAction(nameof(GetById), new { id = file.Id }, ToResponse(file));
     }
@@ -121,9 +135,23 @@ public sealed class FilesController(
         var file = await fileRepository.GetByIdAsync(id);
         if (file is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.File,
+                file.Id,
+                file.OrganizationId
+            )
+        )
+            return Forbid();
 
         file.Rename(request.Name);
         await fileRepository.SaveChangesAsync();
+        await activityLogger.LogAsync(
+            ActivityAction.Renamed,
+            ActivityResourceType.File,
+            file.Id,
+            file.Name
+        );
         return Ok(ToResponse(file));
     }
 
@@ -133,9 +161,23 @@ public sealed class FilesController(
         var file = await fileRepository.GetByIdAsync(id);
         if (file is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.File,
+                file.Id,
+                file.OrganizationId
+            )
+        )
+            return Forbid();
 
         file.MoveTo(request.NewFolderId);
         await fileRepository.SaveChangesAsync();
+        await activityLogger.LogAsync(
+            ActivityAction.Moved,
+            ActivityResourceType.File,
+            file.Id,
+            file.Name
+        );
         return Ok(ToResponse(file));
     }
 
@@ -145,9 +187,23 @@ public sealed class FilesController(
         var file = await fileRepository.GetByIdAsync(id);
         if (file is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.File,
+                file.Id,
+                file.OrganizationId
+            )
+        )
+            return Forbid();
 
         file.Delete();
         await fileRepository.SaveChangesAsync();
+        await activityLogger.LogAsync(
+            ActivityAction.Deleted,
+            ActivityResourceType.File,
+            file.Id,
+            file.Name
+        );
         return NoContent();
     }
 
@@ -160,6 +216,12 @@ public sealed class FilesController(
 
         file.Restore();
         await fileRepository.SaveChangesAsync();
+        await activityLogger.LogAsync(
+            ActivityAction.Restored,
+            ActivityResourceType.File,
+            file.Id,
+            file.Name
+        );
         return Ok(ToResponse(file));
     }
 
@@ -184,9 +246,23 @@ public sealed class FilesController(
         var file = await fileRepository.GetByIdAsync(id);
         if (file is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.File,
+                file.Id,
+                file.OrganizationId
+            )
+        )
+            return Forbid();
 
         file.Star();
         await fileRepository.SaveChangesAsync();
+        await activityLogger.LogAsync(
+            ActivityAction.Starred,
+            ActivityResourceType.File,
+            file.Id,
+            file.Name
+        );
         return Ok(ToResponse(file));
     }
 
@@ -196,19 +272,24 @@ public sealed class FilesController(
         var file = await fileRepository.GetByIdAsync(id);
         if (file is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.File,
+                file.Id,
+                file.OrganizationId
+            )
+        )
+            return Forbid();
 
         file.Unstar();
         await fileRepository.SaveChangesAsync();
+        await activityLogger.LogAsync(
+            ActivityAction.Unstarred,
+            ActivityResourceType.File,
+            file.Id,
+            file.Name
+        );
         return Ok(ToResponse(file));
-    }
-
-    [HttpGet("recent")]
-    public async Task<ActionResult<IReadOnlyList<FileResponse>>> GetRecent(
-        [FromQuery] int take = 10
-    )
-    {
-        var files = await fileRepository.GetRecentAsync(take);
-        return Ok(files.Select(ToResponse));
     }
 
     [HttpPost("{id:guid}/share")]

@@ -10,6 +10,7 @@ import { StarredScreen } from './features/starred/StarredScreen';
 import { HomeScreen } from './features/home/HomeScreen';
 import { RecentScreen } from './features/recent/RecentScreen';
 import { SearchScreen } from './features/search/SearchScreen';
+import { SharedWithMeScreen } from './features/sharing/SharedWithMeScreen';
 
 function App() {
   const [auth, setAuth] = useState<AuthResponse | null>(null);
@@ -37,6 +38,7 @@ function App() {
     if (view === 'trash') return <TrashScreen />;
     if (view === 'starred') return <StarredScreen />;
     if (view === 'recent') return <RecentScreen />;
+    if (view === 'shared') return <SharedWithMeScreen />
     return <FileBrowser />;
   };
 

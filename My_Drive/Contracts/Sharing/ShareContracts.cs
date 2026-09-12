@@ -10,3 +10,14 @@ public sealed record ShareResponse(
     string Permission,
     DateTime CreatedAt
 );
+
+public sealed record SharedWithMeResponse(
+    Guid ShareId,
+    Guid ResourceId,
+    string ResourceType,
+    string ResourceName,
+    string SharedByName,
+    string SharedByEmail,
+    string Permission,
+    DateTime SharedAt
+);

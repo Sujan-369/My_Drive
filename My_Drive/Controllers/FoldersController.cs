@@ -3,7 +3,6 @@ using My_Drive.Contracts.Folders;
 using My_Drive.Contracts.Sharing;
 using My_Drive.Core.Entities;
 using My_Drive.Core.Interfaces;
-using My_Drive.Infrastructure.Repositories;
 
 namespace My_Drive.Controllers;
 
@@ -14,6 +13,7 @@ public sealed class FoldersController(
     ICurrentOrganizationProvider currentOrganizationProvider,
     ICurrentUserProvider currentUserProvider,
     IActivityLogger activityLogger,
+    IPermissionService permissionService,
     IShareRepository shareRepository,
     IUserRepository userRepository
 ) : ControllerBase
@@ -76,6 +76,14 @@ public sealed class FoldersController(
         var folder = await folderRepository.GetByIdAsync(id);
         if (folder is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.Folder,
+                folder.Id,
+                folder.OrganizationId
+            )
+        )
+            return Forbid();
 
         folder.Rename(request.Name);
         await folderRepository.SaveChangesAsync();
@@ -97,6 +105,14 @@ public sealed class FoldersController(
         var folder = await folderRepository.GetByIdAsync(id);
         if (folder is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.Folder,
+                folder.Id,
+                folder.OrganizationId
+            )
+        )
+            return Forbid();
 
         folder.MoveTo(request.NewParentFolderId);
         await folderRepository.SaveChangesAsync();
@@ -115,6 +131,14 @@ public sealed class FoldersController(
         var folder = await folderRepository.GetByIdAsync(id);
         if (folder is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.Folder,
+                folder.Id,
+                folder.OrganizationId
+            )
+        )
+            return Forbid();
 
         folder.Delete();
         await folderRepository.SaveChangesAsync();
@@ -162,6 +186,14 @@ public sealed class FoldersController(
         var folder = await folderRepository.GetByIdAsync(id);
         if (folder is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.Folder,
+                folder.Id,
+                folder.OrganizationId
+            )
+        )
+            return Forbid();
 
         folder.Star();
         await folderRepository.SaveChangesAsync();
@@ -180,6 +212,14 @@ public sealed class FoldersController(
         var folder = await folderRepository.GetByIdAsync(id);
         if (folder is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.Folder,
+                folder.Id,
+                folder.OrganizationId
+            )
+        )
+            return Forbid();
 
         folder.Unstar();
         await folderRepository.SaveChangesAsync();
