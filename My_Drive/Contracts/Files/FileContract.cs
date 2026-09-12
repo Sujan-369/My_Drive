@@ -6,6 +6,19 @@ public sealed class UploadFileRequest
     public Guid? FolderId { get; init; }
 }
 
-public sealed record FileResponse(Guid Id, string Name, Guid? FolderId, long Size, string ContentHash, DateTime CreatedAt, DateTime ModifiedAt, DateTime? DeletedAt, bool IsStarred);
+public sealed record FileResponse(
+    Guid Id,
+    string Name,
+    Guid? FolderId,
+    long Size,
+    string ContentHash,
+    DateTime CreatedAt,
+    DateTime ModifiedAt,
+    DateTime? DeletedAt,
+    bool IsStarred,
+    bool IsShared
+);
+
 public sealed record RenameFileRequest(string Name);
+
 public sealed record MoveFileRequest(Guid? NewFolderId);

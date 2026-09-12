@@ -6,6 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NewFolderDialog } from '../folders/NewFolderDialog';
 import { Folder, FileText, Upload, ChevronRight, Trash2, Star } from 'lucide-react';
+import { Share2 } from 'lucide-react';
+import { ShareDialog } from '../sharing/ShareDialog';
+import { Download } from 'lucide-react';
+import { downloadFile } from '@/lib/downloadFile';
 
 interface BreadcrumbEntry {
   id: string | null;
@@ -34,6 +38,8 @@ export function FileBrowser() {
   const deleteFile = useDeleteFile(currentFolderId);
   const toggleStarFolder = useToggleStarFolder(currentFolderId);
   const toggleStarFile = useToggleStarFile(currentFolderId);
+  
+  const [shareTarget, setShareTarget] = useState<{ type: 'folders' | 'files'; id: string; name: string } | null>(null);
 
   const isLoading = foldersLoading || filesLoading;
   const hasContent = (folders?.length ?? 0) > 0 || (files?.length ?? 0) > 0;
@@ -98,12 +104,23 @@ export function FileBrowser() {
 
         {!isLoading && hasContent && (
           <motion.div className="divide-y" variants={listVariants} initial="hidden" animate="visible">
+            
             {folders?.map((folder) => (
               <motion.div key={folder.id} variants={itemVariants} className="flex items-center gap-3 px-4 py-3 hover:bg-muted">
                 <button onClick={() => navigateInto(folder.id, folder.name)} className="flex flex-1 items-center gap-3 text-left">
                   <Folder className="size-5 shrink-0 text-muted-foreground" />
                   <span className="truncate">{folder.name}</span>
+                  {folder.isShared && (
+                    <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      Shared
+                    </span>
+                  )}
                 </button>
+
+                <Button variant="ghost" size="icon" onClick={() => setShareTarget({ type: 'folders', id: folder.id, name: folder.name })} title="Share">
+                  <Share2 className="size-4 text-muted-foreground" />
+                </Button>
+
                 <Button
                   variant="ghost"
                   size="icon"
@@ -117,11 +134,22 @@ export function FileBrowser() {
                 </Button>
               </motion.div>
             ))}
+
             {files?.map((file) => (
               <motion.div key={file.id} variants={itemVariants} className="flex items-center gap-3 px-4 py-3">
                 <FileText className="size-5 shrink-0 text-muted-foreground" />
                 <span className="flex-1 truncate">{file.name}</span>
+                {file.isShared && (
+                  <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    Shared
+                  </span>
+                )}
                 <span className="shrink-0 text-xs text-muted-foreground">{formatSize(file.size)}</span>
+                
+                <Button variant="ghost" size="icon" onClick={() => setShareTarget({ type: 'files', id: file.id, name: file.name })} title="Share">
+                  <Share2 className="size-4 text-muted-foreground" />
+                </Button>
+
                 <Button
                   variant="ghost"
                   size="icon"
@@ -130,14 +158,29 @@ export function FileBrowser() {
                 >
                   <Star className={`size-4 ${file.isStarred ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
                 </Button>
+
                 <Button variant="ghost" size="icon" onClick={() => deleteFile.mutate(file.id)} title="Delete">
                   <Trash2 className="size-4 text-muted-foreground" />
                 </Button>
+
+                <Button variant="ghost" size="icon" onClick={() => downloadFile(file.id, file.name)} title="Download">
+                  <Download className="size-4 text-muted-foreground" />
+                </Button>
+
               </motion.div>
             ))}
           </motion.div>
         )}
       </div>
+      {shareTarget && (
+        <ShareDialog
+          open={shareTarget !== null}
+          onOpenChange={(open) => !open && setShareTarget(null)}
+          resourceType={shareTarget.type}
+          resourceId={shareTarget.id}
+          resourceName={shareTarget.name}
+        />
+      )}
     </div>
   );
 }

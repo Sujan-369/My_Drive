@@ -6,13 +6,15 @@ namespace My_Drive.Infrastructure.Data;
 
 public sealed class ApplicationDbContext(
     DbContextOptions<ApplicationDbContext> options,
-    ICurrentOrganizationProvider currentOrganizationProvider) : DbContext(options)
+    ICurrentOrganizationProvider currentOrganizationProvider
+) : DbContext(options)
 {
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Folder> Folders => Set<Folder>();
     public DbSet<DriveFile> DriveFiles => Set<DriveFile>();
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
+    public DbSet<Share> Shares => Set<Share>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -20,17 +22,33 @@ public sealed class ApplicationDbContext(
 
         // The actual tenant isolation enforcement — every User query
         // is silently scoped to the current org, with no way to forget it.
-        modelBuilder.Entity<User>().HasQueryFilter(u => u.OrganizationId == currentOrganizationProvider.OrganizationId);
+        modelBuilder
+            .Entity<User>()
+            .HasQueryFilter(u => u.OrganizationId == currentOrganizationProvider.OrganizationId);
 
-        modelBuilder.Entity<Folder>().HasQueryFilter(f => f.OrganizationId == currentOrganizationProvider.OrganizationId);
+        modelBuilder
+            .Entity<Folder>()
+            .HasQueryFilter(f => f.OrganizationId == currentOrganizationProvider.OrganizationId);
 
-        modelBuilder.Entity<DriveFile>().HasQueryFilter(f => f.OrganizationId == currentOrganizationProvider.OrganizationId);
+        modelBuilder
+            .Entity<DriveFile>()
+            .HasQueryFilter(f => f.OrganizationId == currentOrganizationProvider.OrganizationId);
 
-        modelBuilder.Entity<Folder>().HasQueryFilter(f => f.OrganizationId == currentOrganizationProvider.OrganizationId && !f.IsDeleted);
+        modelBuilder
+            .Entity<Folder>()
+            .HasQueryFilter(f =>
+                f.OrganizationId == currentOrganizationProvider.OrganizationId && !f.IsDeleted
+            );
 
-        modelBuilder.Entity<DriveFile>().HasQueryFilter(f => f.OrganizationId == currentOrganizationProvider.OrganizationId && !f.IsDeleted);
+        modelBuilder
+            .Entity<DriveFile>()
+            .HasQueryFilter(f =>
+                f.OrganizationId == currentOrganizationProvider.OrganizationId && !f.IsDeleted
+            );
 
-        modelBuilder.Entity<ActivityLog>().HasQueryFilter(l => l.OrganizationId == currentOrganizationProvider.OrganizationId);
+        modelBuilder
+            .Entity<ActivityLog>()
+            .HasQueryFilter(l => l.OrganizationId == currentOrganizationProvider.OrganizationId);
 
         base.OnModelCreating(modelBuilder);
     }

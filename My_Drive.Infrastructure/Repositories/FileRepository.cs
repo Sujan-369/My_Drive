@@ -7,11 +7,31 @@ namespace My_Drive.Infrastructure.Repositories;
 
 public sealed class FileRepository(
     ApplicationDbContext dbContext,
-    ICurrentOrganizationProvider currentOrganizationProvider
+    ICurrentOrganizationProvider currentOrganizationProvider,
+    ICurrentUserProvider currentUserProvider
 ) : IFileRepository
 {
-    public async Task<DriveFile?> GetByIdAsync(Guid id) =>
-        await dbContext.DriveFiles.FirstOrDefaultAsync(f => f.Id == id);
+    public async Task<DriveFile?> GetByIdAsync(Guid id)
+    {
+        var ownFile = await dbContext.DriveFiles.FirstOrDefaultAsync(f => f.Id == id);
+        if (ownFile is not null)
+            return ownFile;
+
+        var candidate = await dbContext
+            .DriveFiles.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(f => f.Id == id && !f.IsDeleted);
+        if (candidate is null)
+            return null;
+
+        var hasAccess = await dbContext.Shares.AnyAsync(s =>
+            s.ResourceType == ShareResourceType.File
+            && s.ResourceId == id
+            && s.SharedWithUserId == currentUserProvider.UserId
+            && (s.ExpiresAt == null || s.ExpiresAt > DateTime.UtcNow)
+        );
+
+        return hasAccess ? candidate : null;
+    }
 
     public async Task<IReadOnlyList<DriveFile>> GetByFolderIdAsync(Guid? folderId) =>
         await dbContext
@@ -54,14 +74,14 @@ public sealed class FileRepository(
     public async Task<IReadOnlyList<DriveFile>> GetStarredAsync() =>
         await dbContext.DriveFiles.Where(f => f.IsStarred).OrderBy(f => f.Name).ToListAsync();
 
-    public async Task<long> GetTotalSizeAsync() => await dbContext.DriveFiles.SumAsync(f => f.Size);
-
-    public async Task<IReadOnlyList<DriveFile>> GetRecentAsync(int take) =>
-        await dbContext.DriveFiles.OrderByDescending(f => f.ModifiedAt).Take(take).ToListAsync();
-
     public async Task<IReadOnlyList<DriveFile>> SearchAsync(string term) =>
         await dbContext
             .DriveFiles.Where(f => EF.Functions.ILike(f.Name, $"%{term}%"))
             .OrderByDescending(f => f.ModifiedAt)
             .ToListAsync();
+
+    public async Task<long> GetTotalSizeAsync() => await dbContext.DriveFiles.SumAsync(f => f.Size);
+
+    public async Task<IReadOnlyList<DriveFile>> GetRecentAsync(int take) =>
+        await dbContext.DriveFiles.OrderByDescending(f => f.ModifiedAt).Take(take).ToListAsync();
 }

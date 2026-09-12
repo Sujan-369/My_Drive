@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using My_Drive.Contracts.Folders;
+using My_Drive.Contracts.Sharing;
 using My_Drive.Core.Entities;
 using My_Drive.Core.Interfaces;
 
@@ -11,7 +12,10 @@ public sealed class FoldersController(
     IFolderRepository folderRepository,
     ICurrentOrganizationProvider currentOrganizationProvider,
     ICurrentUserProvider currentUserProvider,
-    IActivityLogger activityLogger
+    IActivityLogger activityLogger,
+    IPermissionService permissionService,
+    IShareRepository shareRepository,
+    IUserRepository userRepository
 ) : ControllerBase
 {
     [HttpGet]
@@ -20,7 +24,11 @@ public sealed class FoldersController(
     )
     {
         var folders = await folderRepository.GetByParentIdAsync(parentFolderId);
-        return Ok(folders.Select(ToResponse));
+        var sharedIds = await shareRepository.GetSharedResourceIdsAsync(
+            currentUserProvider.UserId,
+            ShareResourceType.Folder
+        );
+        return Ok(folders.Select(f => ToResponse(f, sharedIds.Contains(f.Id))));
     }
 
     [HttpGet("{id:guid}")]
@@ -34,14 +42,14 @@ public sealed class FoldersController(
     public async Task<ActionResult<IReadOnlyList<FolderResponse>>> GetTrash()
     {
         var folders = await folderRepository.GetDeletedAsync();
-        return Ok(folders.Select(ToResponse));
+        return Ok(folders.Select(f => ToResponse(f, false)));
     }
 
     [HttpGet("starred")]
     public async Task<ActionResult<IReadOnlyList<FolderResponse>>> GetStarred()
     {
         var folders = await folderRepository.GetStarredAsync();
-        return Ok(folders.Select(ToResponse));
+        return Ok(folders.Select(f => ToResponse(f, false)));
     }
 
     [HttpPost]
@@ -72,6 +80,14 @@ public sealed class FoldersController(
         var folder = await folderRepository.GetByIdAsync(id);
         if (folder is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.Folder,
+                folder.Id,
+                folder.OrganizationId
+            )
+        )
+            return Forbid();
 
         folder.Rename(request.Name);
         await folderRepository.SaveChangesAsync();
@@ -93,6 +109,14 @@ public sealed class FoldersController(
         var folder = await folderRepository.GetByIdAsync(id);
         if (folder is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.Folder,
+                folder.Id,
+                folder.OrganizationId
+            )
+        )
+            return Forbid();
 
         folder.MoveTo(request.NewParentFolderId);
         await folderRepository.SaveChangesAsync();
@@ -111,6 +135,14 @@ public sealed class FoldersController(
         var folder = await folderRepository.GetByIdAsync(id);
         if (folder is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.Folder,
+                folder.Id,
+                folder.OrganizationId
+            )
+        )
+            return Forbid();
 
         folder.Delete();
         await folderRepository.SaveChangesAsync();
@@ -158,15 +190,17 @@ public sealed class FoldersController(
         var folder = await folderRepository.GetByIdAsync(id);
         if (folder is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.Folder,
+                folder.Id,
+                folder.OrganizationId
+            )
+        )
+            return Forbid();
 
         folder.Star();
         await folderRepository.SaveChangesAsync();
-        await activityLogger.LogAsync(
-            ActivityAction.Starred,
-            ActivityResourceType.Folder,
-            folder.Id,
-            folder.Name
-        );
         return Ok(ToResponse(folder));
     }
 
@@ -176,19 +210,73 @@ public sealed class FoldersController(
         var folder = await folderRepository.GetByIdAsync(id);
         if (folder is null)
             return NotFound();
+        if (
+            !await permissionService.CanEditAsync(
+                ShareResourceType.Folder,
+                folder.Id,
+                folder.OrganizationId
+            )
+        )
+            return Forbid();
 
         folder.Unstar();
         await folderRepository.SaveChangesAsync();
+        return Ok(ToResponse(folder));
+    }
+
+    [HttpPost("{id:guid}/share")]
+    public async Task<ActionResult<ShareResponse>> Share(
+        Guid id,
+        [FromBody] CreateShareRequest request
+    )
+    {
+        var folder = await folderRepository.GetByIdAsync(id);
+        if (folder is null)
+            return NotFound();
+
+        var recipient = await userRepository.GetByEmailAsync(request.RecipientEmail);
+        if (recipient is null)
+            return BadRequest("No user found with that email.");
+
+        if (
+            !Enum.TryParse<SharePermission>(
+                request.Permission,
+                ignoreCase: true,
+                out var permission
+            )
+        )
+        {
+            return BadRequest("Permission must be 'Viewer' or 'Editor'.");
+        }
+
+        var share = new Share(
+            ShareResourceType.Folder,
+            folder.Id,
+            currentUserProvider.UserId,
+            recipient.Id,
+            permission
+        );
+        await shareRepository.AddAsync(share);
         await activityLogger.LogAsync(
-            ActivityAction.Unstarred,
+            ActivityAction.Shared,
             ActivityResourceType.Folder,
             folder.Id,
             folder.Name
         );
-        return Ok(ToResponse(folder));
+
+        return Ok(
+            new ShareResponse(
+                share.Id,
+                folder.Id,
+                "Folder",
+                request.RecipientEmail,
+                permission.ToString(),
+                share.CreatedAt
+            )
+        );
     }
 
-    private static FolderResponse ToResponse(Folder folder) =>
+    private static FolderResponse ToResponse(Folder folder, bool isShared = false) =>
         new(
             folder.Id,
             folder.Name,
@@ -196,6 +284,7 @@ public sealed class FoldersController(
             folder.CreatedAt,
             folder.ModifiedAt,
             folder.DeletedAt,
-            folder.IsStarred
+            folder.IsStarred,
+            isShared
         );
 }
