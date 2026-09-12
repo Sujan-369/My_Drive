@@ -28,7 +28,11 @@ public sealed class FilesController(
     )
     {
         var files = await fileRepository.GetByFolderIdAsync(folderId);
-        return Ok(files.Select(ToResponse));
+        var sharedIds = await shareRepository.GetSharedResourceIdsAsync(
+            currentUserProvider.UserId,
+            ShareResourceType.File
+        );
+        return Ok(files.Select(f => ToResponse(f, sharedIds.Contains(f.Id))));
     }
 
     [HttpGet("{id:guid}")]
@@ -42,14 +46,14 @@ public sealed class FilesController(
     public async Task<ActionResult<IReadOnlyList<FileResponse>>> GetTrash()
     {
         var files = await fileRepository.GetDeletedAsync();
-        return Ok(files.Select(ToResponse));
+        return Ok(files.Select(f => ToResponse(f, false)));
     }
 
     [HttpGet("starred")]
     public async Task<ActionResult<IReadOnlyList<FileResponse>>> GetStarred()
     {
         var files = await fileRepository.GetStarredAsync();
-        return Ok(files.Select(ToResponse));
+        return Ok(files.Select(f => ToResponse(f, false)));
     }
 
     [HttpGet("recent")]
@@ -58,7 +62,7 @@ public sealed class FilesController(
     )
     {
         var files = await fileRepository.GetRecentAsync(take);
-        return Ok(files.Select(ToResponse));
+        return Ok(files.Select(f => ToResponse(f, false)));
     }
 
     [HttpPost]
@@ -257,12 +261,6 @@ public sealed class FilesController(
 
         file.Star();
         await fileRepository.SaveChangesAsync();
-        await activityLogger.LogAsync(
-            ActivityAction.Starred,
-            ActivityResourceType.File,
-            file.Id,
-            file.Name
-        );
         return Ok(ToResponse(file));
     }
 
@@ -283,12 +281,6 @@ public sealed class FilesController(
 
         file.Unstar();
         await fileRepository.SaveChangesAsync();
-        await activityLogger.LogAsync(
-            ActivityAction.Unstarred,
-            ActivityResourceType.File,
-            file.Id,
-            file.Name
-        );
         return Ok(ToResponse(file));
     }
 
@@ -344,7 +336,7 @@ public sealed class FilesController(
         );
     }
 
-    private static FileResponse ToResponse(DriveFile file) =>
+    private static FileResponse ToResponse(DriveFile file, bool isShared = false) =>
         new(
             file.Id,
             file.Name,
@@ -354,6 +346,7 @@ public sealed class FilesController(
             file.CreatedAt,
             file.ModifiedAt,
             file.DeletedAt,
-            file.IsStarred
+            file.IsStarred,
+            isShared
         );
 }

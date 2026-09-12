@@ -1,15 +1,13 @@
 import { useSharedWithMe } from './useSharing';
 import { Folder, FileText, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-const API_BASE_URL = 'http://localhost:5271';
+import { downloadFile } from '@/lib/downloadFile';
 
 export function SharedWithMeScreen() {
   const { data: shares, isLoading } = useSharedWithMe();
 
-  const handleDownload = (fileId: string) => {
-    const token = localStorage.getItem('auth_token');
-    window.open(`${API_BASE_URL}/api/files/${fileId}/download?token=${token}`, '_blank');
+  const handleDownload = (fileId: string, fileName: string) => {
+    downloadFile(fileId, fileName);
   };
 
   return (
@@ -41,7 +39,12 @@ export function SharedWithMeScreen() {
                 {share.permission}
               </span>
               {share.resourceType === 'File' && (
-                <Button variant="ghost" size="icon" onClick={() => handleDownload(share.resourceId)} title="Download">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDownload(share.resourceId, share.resourceName)}
+                  title="Download"
+                >
                   <Download className="size-4" />
                 </Button>
               )}

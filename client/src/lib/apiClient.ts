@@ -35,6 +35,18 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return response.json();
 }
 
+async function requestBlob(path: string): Promise<Blob> {
+  const token = localStorage.getItem('auth_token');
+  const headers = new Headers();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  const response = await fetch(`${API_BASE_URL}${path}`, { headers });
+  if (!response.ok) {
+    throw new ApiError(response.status, `Download failed: ${response.status}`);
+  }
+  return response.blob();
+}
+
 export const apiClient = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown) =>
@@ -42,4 +54,5 @@ export const apiClient = {
   put: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  getBlob: (path: string) => requestBlob(path),
 };

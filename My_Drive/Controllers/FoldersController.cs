@@ -24,7 +24,11 @@ public sealed class FoldersController(
     )
     {
         var folders = await folderRepository.GetByParentIdAsync(parentFolderId);
-        return Ok(folders.Select(ToResponse));
+        var sharedIds = await shareRepository.GetSharedResourceIdsAsync(
+            currentUserProvider.UserId,
+            ShareResourceType.Folder
+        );
+        return Ok(folders.Select(f => ToResponse(f, sharedIds.Contains(f.Id))));
     }
 
     [HttpGet("{id:guid}")]
@@ -38,14 +42,14 @@ public sealed class FoldersController(
     public async Task<ActionResult<IReadOnlyList<FolderResponse>>> GetTrash()
     {
         var folders = await folderRepository.GetDeletedAsync();
-        return Ok(folders.Select(ToResponse));
+        return Ok(folders.Select(f => ToResponse(f, false)));
     }
 
     [HttpGet("starred")]
     public async Task<ActionResult<IReadOnlyList<FolderResponse>>> GetStarred()
     {
         var folders = await folderRepository.GetStarredAsync();
-        return Ok(folders.Select(ToResponse));
+        return Ok(folders.Select(f => ToResponse(f, false)));
     }
 
     [HttpPost]
@@ -197,12 +201,6 @@ public sealed class FoldersController(
 
         folder.Star();
         await folderRepository.SaveChangesAsync();
-        await activityLogger.LogAsync(
-            ActivityAction.Starred,
-            ActivityResourceType.Folder,
-            folder.Id,
-            folder.Name
-        );
         return Ok(ToResponse(folder));
     }
 
@@ -223,12 +221,6 @@ public sealed class FoldersController(
 
         folder.Unstar();
         await folderRepository.SaveChangesAsync();
-        await activityLogger.LogAsync(
-            ActivityAction.Unstarred,
-            ActivityResourceType.Folder,
-            folder.Id,
-            folder.Name
-        );
         return Ok(ToResponse(folder));
     }
 
@@ -284,7 +276,7 @@ public sealed class FoldersController(
         );
     }
 
-    private static FolderResponse ToResponse(Folder folder) =>
+    private static FolderResponse ToResponse(Folder folder, bool isShared = false) =>
         new(
             folder.Id,
             folder.Name,
@@ -292,6 +284,7 @@ public sealed class FoldersController(
             folder.CreatedAt,
             folder.ModifiedAt,
             folder.DeletedAt,
-            folder.IsStarred
+            folder.IsStarred,
+            isShared
         );
 }

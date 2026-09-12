@@ -10,6 +10,7 @@ export interface FileResponse {
   modifiedAt: string;
   deletedAt: string | null;
   isStarred: boolean;
+  isShared?: boolean;
 }
 
 export const filesApi = {

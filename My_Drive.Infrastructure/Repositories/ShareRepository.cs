@@ -14,6 +14,21 @@ public sealed class ShareRepository(ApplicationDbContext dbContext) : IShareRepo
         await dbContext.SaveChangesAsync();
     }
 
+    public async Task<HashSet<Guid>> GetSharedResourceIdsAsync(
+        Guid sharedByUserId,
+        ShareResourceType resourceType
+    ) =>
+        [
+            .. await dbContext
+                .Shares.Where(s =>
+                    s.SharedByUserId == sharedByUserId
+                    && s.ResourceType == resourceType
+                    && (s.ExpiresAt == null || s.ExpiresAt > DateTime.UtcNow)
+                )
+                .Select(s => s.ResourceId)
+                .ToListAsync(),
+        ];
+
     public async Task<IReadOnlyList<SharedResourceInfo>> GetSharedWithMeAsync(Guid userId)
     {
         var shares = await dbContext

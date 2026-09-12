@@ -7,4 +7,8 @@ public interface IShareRepository
 {
     Task AddAsync(Share share);
     Task<IReadOnlyList<SharedResourceInfo>> GetSharedWithMeAsync(Guid userId);
+    Task<HashSet<Guid>> GetSharedResourceIdsAsync(
+        Guid sharedByUserId,
+        ShareResourceType resourceType
+    );
 }

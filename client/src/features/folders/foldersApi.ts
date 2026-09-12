@@ -8,6 +8,7 @@ export interface FolderResponse {
   modifiedAt: string;
   deletedAt: string | null;
   isStarred: boolean;
+  isShared?: boolean;
 }
 
 export const foldersApi = {
