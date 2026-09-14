@@ -336,6 +336,53 @@ public sealed class FilesController(
         );
     }
 
+    [HttpGet("{id:guid}/detail")]
+    public async Task<ActionResult<FileDetailResponse>> GetDetail(Guid id)
+    {
+        var file = await fileRepository.GetByIdAsync(id);
+        if (file is null)
+            return NotFound();
+
+        var versions = file
+            .Versions.OrderByDescending(v => v.CreatedAt)
+            .Select(v => new FileVersionResponse(v.Id, v.Size, v.CreatedAt))
+            .ToList();
+
+        return Ok(
+            new FileDetailResponse(
+                file.Id,
+                file.Name,
+                file.FolderId,
+                file.Size,
+                file.CreatedAt,
+                file.ModifiedAt,
+                file.IsStarred,
+                versions
+            )
+        );
+    }
+
+    [HttpGet("{id:guid}/shares")]
+    public async Task<ActionResult<IReadOnlyList<ShareInfoResponse>>> GetShares(Guid id)
+    {
+        var file = await fileRepository.GetByIdAsync(id);
+        if (file is null)
+            return NotFound();
+
+        var shares = await shareRepository.GetSharesForResourceAsync(ShareResourceType.File, id);
+        return Ok(
+            shares.Select(s => new ShareInfoResponse(
+                s.ShareId,
+                s.UserId,
+                s.DisplayName,
+                s.Email,
+                s.PictureUrl,
+                s.Permission.ToString(),
+                s.SharedAt
+            ))
+        );
+    }
+
     private static FileResponse ToResponse(DriveFile file, bool isShared = false) =>
         new(
             file.Id,

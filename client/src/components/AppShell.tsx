@@ -2,17 +2,19 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { HardDrive, LogOut, Search } from 'lucide-react';
+import { HardDrive, LogOut, Search, Settings } from 'lucide-react';
 
 interface AppShellProps {
   userName: string;
-  userEmail: string;
+  userEmail: string; 
   onSignOut: () => void;
   onSearch: (query: string) => void;
+  onOpenSettings: () => void; 
   children: ReactNode;
+  userPictureUrl: string | null;
 }
 
-export function AppShell({ userName, userEmail, onSignOut, onSearch, children }: AppShellProps) {
+export function AppShell({ userName, userEmail,  onSignOut, onSearch, onOpenSettings, children, userPictureUrl }: AppShellProps) {
   const [searchValue, setSearchValue] = useState('');
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -42,10 +44,22 @@ export function AppShell({ userName, userEmail, onSignOut, onSearch, children }:
             />
           </div>
           <div className="flex shrink-0 items-center gap-3">
-            <div className="text-right text-sm leading-tight">
-              <div className="font-medium">{userName}</div>
-              <div className="text-xs text-muted-foreground">{userEmail}</div>
-            </div>
+            {userPictureUrl ? (
+              <img
+                src={userPictureUrl}
+                alt={userName}
+                title={userEmail}
+                className="size-8 rounded-full"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div title={userEmail} className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+                {userName.charAt(0).toUpperCase()}
+              </div>
+            )}
+              <Button variant="ghost" size="icon" onClick={onOpenSettings} title="Settings">
+                <Settings className="size-4" />
+              </Button>
             <Button variant="ghost" size="icon" onClick={onSignOut} title="Sign out">
               <LogOut className="size-4" />
             </Button>

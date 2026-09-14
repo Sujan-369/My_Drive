@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
-import { signInWithGoogle, type AuthResponse } from './authApi';
+import { authApi, type AuthResponse } from './authApi';
 import { Loader2 } from 'lucide-react';
 
 interface GoogleSignInButtonProps {
@@ -17,7 +17,7 @@ export function GoogleSignInButton({ onSignedIn }: GoogleSignInButtonProps) {
     }
     setIsSigningIn(true);
     try {
-      const auth = await signInWithGoogle(credentialResponse.credential);
+      const auth = await authApi.signInWithGoogle(credentialResponse.credential);
       onSignedIn(auth);
     } catch (err) {
       console.error('Sign-in failed:', err);

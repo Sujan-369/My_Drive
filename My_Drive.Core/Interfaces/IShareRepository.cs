@@ -11,4 +11,8 @@ public interface IShareRepository
         Guid sharedByUserId,
         ShareResourceType resourceType
     );
+    Task<IReadOnlyList<ShareWithUserInfo>> GetSharesForResourceAsync(
+        ShareResourceType resourceType,
+        Guid resourceId
+    );
 }

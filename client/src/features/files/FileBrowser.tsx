@@ -25,7 +25,11 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
-export function FileBrowser() {
+interface FileBrowserProps {
+  onOpenPreview: (fileId: string) => void;
+}
+
+export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbEntry[]>([{ id: null, name: 'My Drive' }]);
   const currentFolderId = breadcrumbs[breadcrumbs.length - 1].id;
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -138,7 +142,12 @@ export function FileBrowser() {
             {files?.map((file) => (
               <motion.div key={file.id} variants={itemVariants} className="flex items-center gap-3 px-4 py-3">
                 <FileText className="size-5 shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate">{file.name}</span>
+                <button
+                  onClick={() => onOpenPreview(file.id)}
+                  className="flex-1 truncate text-left text-sm hover:underline"
+                >
+                  {file.name}
+                </button>
                 {file.isShared && (
                   <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                     Shared
