@@ -5,6 +5,7 @@ import { Folder, FileText } from 'lucide-react';
 
 interface SearchScreenProps {
   query: string;
+  onOpenPreview: (fileId: string) => void;
 }
 
 const categories: SearchCategory[] = ['All', 'Documents', 'Folders', 'Images', 'Spreadsheets'];
@@ -28,7 +29,7 @@ function highlightMatch(name: string, query: string) {
   );
 }
 
-export function SearchScreen({ query }: SearchScreenProps) {
+export function SearchScreen({ query, onOpenPreview }: SearchScreenProps) {
   const { data: results, isLoading } = useSearch(query);
   const [activeCategory, setActiveCategory] = useState<SearchCategory>('All');
 
@@ -76,7 +77,13 @@ export function SearchScreen({ query }: SearchScreenProps) {
               ) : (
                 <FileText className="size-4 shrink-0 text-muted-foreground" />
               )}
-              <span className="flex-1 truncate text-sm">{highlightMatch(result.name, query)}</span>
+              {result.type === 'File' ? (
+                <button onClick={() => onOpenPreview(result.id)} className="flex-1 truncate text-left text-sm hover:underline">
+                  {highlightMatch(result.name, query)}
+                </button>
+              ) : (
+                <span className="flex-1 truncate text-sm">{highlightMatch(result.name, query)}</span>
+              )}
               <span className="shrink-0 text-xs text-muted-foreground">{formatSize(result.size)}</span>
             </div>
           ))}

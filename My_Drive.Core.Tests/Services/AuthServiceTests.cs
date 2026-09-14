@@ -12,7 +12,7 @@ public class AuthServiceTests
     public async Task SignIn_FirstTimeUser_CreatesOneOrganizationAndOneUser()
     {
         var tokenValidator = new FakeTokenValidator(
-            new GoogleIdentity("sub-123", "a@b.com", "Alice")
+            new GoogleIdentity("sub-123", "a@b.com", "Alice", "https://example.com/picture.jpg")
         );
         var userRepo = new FakeUserRepository();
         var orgRepo = new FakeOrganizationRepository();
@@ -28,7 +28,12 @@ public class AuthServiceTests
     [Fact]
     public async Task SignIn_ReturningUser_DoesNotCreateDuplicate()
     {
-        var identity = new GoogleIdentity("sub-123", "a@b.com", "Alice");
+        var identity = new GoogleIdentity(
+            "sub-123",
+            "a@b.com",
+            "Alice",
+            "https://example.com/picture.jpg"
+        );
         var tokenValidator = new FakeTokenValidator(identity);
         var userRepo = new FakeUserRepository();
         var orgRepo = new FakeOrganizationRepository();
@@ -71,12 +76,16 @@ public class AuthServiceTests
 
         public Task<User?> GetByEmailAsync(string email) =>
             Task.FromResult(Saved.FirstOrDefault(u => u.Email == email));
+        public Task<User?> GetByIdAsync(Guid id) =>
+        Task.FromResult(Saved.FirstOrDefault(u => u.Id == id));
 
         public Task AddAsync(User user)
         {
             Saved.Add(user);
             return Task.CompletedTask;
         }
+
+        public Task SaveChangesAsync() => Task.CompletedTask;
     }
 
     private sealed class FakeOrganizationRepository : IOrganizationRepository

@@ -33,7 +33,7 @@ const actionLabels: Record<string, string> = {
   Unstarred: 'unstarred',
 };
 
-export function HomeScreen() {
+export function HomeScreen({ onOpenPreview }: { onOpenPreview: (fileId: string) => void }) {
   const { data: usage } = useStorageUsage();
   const { data: recentFiles } = useRecentFiles(5);
   const { data: activity } = useRecentActivity(8);
@@ -82,7 +82,9 @@ export function HomeScreen() {
           {recentFiles?.map((file) => (
             <div key={file.id} className="flex items-center gap-3 px-4 py-3">
               <FileText className="size-4 shrink-0 text-muted-foreground" />
-              <span className="flex-1 truncate text-sm">{file.name}</span>
+              <button onClick={() => onOpenPreview(file.id)} className="flex-1 truncate text-left text-sm hover:underline">
+                {file.name}
+              </button>
               <span className="shrink-0 text-xs text-muted-foreground">{formatRelativeTime(file.modifiedAt)}</span>
             </div>
           ))}

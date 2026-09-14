@@ -7,14 +7,24 @@ public sealed class User
     public string Email { get; private set; } = null!;
     public string DisplayName { get; private set; } = null!;
     public string GoogleSubjectId { get; private set; } = null!;
+    public string? PictureUrl { get; private set; }
 
     private User() { }
 
-    public User(Guid organizationId, string email, string displayName, string googleSubjectId)
+    public User(
+        Guid organizationId,
+        string email,
+        string displayName,
+        string googleSubjectId,
+        string? pictureUrl = null
+    )
     {
         if (organizationId == Guid.Empty)
         {
-            throw new ArgumentException("User must belong to a valid Organization.", nameof(organizationId));
+            throw new ArgumentException(
+                "User must belong to a valid Organization.",
+                nameof(organizationId)
+            );
         }
         if (string.IsNullOrWhiteSpace(email))
         {
@@ -22,7 +32,10 @@ public sealed class User
         }
         if (string.IsNullOrWhiteSpace(googleSubjectId))
         {
-            throw new ArgumentException("GoogleSubjectId cannot be empty.", nameof(googleSubjectId));
+            throw new ArgumentException(
+                "GoogleSubjectId cannot be empty.",
+                nameof(googleSubjectId)
+            );
         }
 
         Id = Guid.NewGuid();
@@ -30,5 +43,12 @@ public sealed class User
         Email = email;
         DisplayName = displayName;
         GoogleSubjectId = googleSubjectId;
+        PictureUrl = pictureUrl;
+    }
+
+    public void UpdateProfile(string displayName, string? pictureUrl)
+    {
+        DisplayName = displayName;
+        PictureUrl = pictureUrl;
     }
 }

@@ -53,7 +53,11 @@ function groupByDay(entries: ActivityLogResponse[]) {
   return groups.filter((g) => g.entries.length > 0);
 }
 
-export function RecentScreen() {
+interface RecentScreenProps {
+  onOpenPreview: (fileId: string) => void;
+}
+
+export function RecentScreen({ onOpenPreview }: RecentScreenProps) {
   const { data: activity, isLoading } = useRecentActivity(50);
   const groups = activity ? groupByDay(activity) : [];
 
@@ -74,7 +78,13 @@ export function RecentScreen() {
                 ) : (
                   <FileText className="size-4 shrink-0 text-muted-foreground" />
                 )}
-                <span className="flex-1 truncate text-sm">{entry.resourceName}</span>
+                {entry.resourceType === 'File' ? (
+                  <button onClick={() => onOpenPreview(entry.resourceId)} className="flex-1 truncate text-left text-sm hover:underline">
+                    {entry.resourceName}
+                  </button>
+                ) : (
+                  <span className="flex-1 truncate text-sm">{entry.resourceName}</span>
+                )}
                 <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                   {actionLabels[entry.action] ?? entry.action}
                 </span>

@@ -82,4 +82,40 @@ public sealed class ShareRepository(ApplicationDbContext dbContext) : IShareRepo
 
         return [.. results.OrderByDescending(r => r.SharedAt)];
     }
+
+    public async Task<IReadOnlyList<ShareWithUserInfo>> GetSharesForResourceAsync(
+        ShareResourceType resourceType,
+        Guid resourceId
+    )
+    {
+        var shares = await dbContext
+            .Shares.Where(s =>
+                s.ResourceType == resourceType
+                && s.ResourceId == resourceId
+                && (s.ExpiresAt == null || s.ExpiresAt > DateTime.UtcNow)
+            )
+            .ToListAsync();
+
+        var results = new List<ShareWithUserInfo>();
+        foreach (var share in shares)
+        {
+            var user = await dbContext
+                .Users.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == share.SharedWithUserId);
+            if (user is null)
+                continue;
+            results.Add(
+                new ShareWithUserInfo(
+                    share.Id,
+                    user.Id,
+                    user.DisplayName,
+                    user.Email,
+                    user.PictureUrl,
+                    share.Permission,
+                    share.CreatedAt
+                )
+            );
+        }
+        return results.OrderBy(r => r.SharedAt).ToList();
+    }
 }

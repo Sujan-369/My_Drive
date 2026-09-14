@@ -20,4 +20,8 @@ public sealed class UserRepository(ApplicationDbContext dbContext) : IUserReposi
 
     public async Task<User?> GetByEmailAsync(string email) =>
         await dbContext.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email);
+
+    public async Task SaveChangesAsync() => await dbContext.SaveChangesAsync();
+    public async Task<User?> GetByIdAsync(Guid id) => await dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
+
 }

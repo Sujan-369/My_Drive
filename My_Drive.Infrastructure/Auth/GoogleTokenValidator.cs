@@ -7,19 +7,22 @@ namespace My_Drive.Infrastructure.Auth;
 
 public sealed class GoogleTokenValidator(IConfiguration configuration) : IGoogleTokenValidator
 {
-    private readonly string _clientId = configuration["Google:ClientId"]?.Trim()
+    private readonly string _clientId =
+        configuration["Google:ClientId"]?.Trim()
         ?? throw new InvalidOperationException("Google:ClientId is not configured.");
 
     public async Task<GoogleIdentity?> ValidateAsync(string idToken)
     {
         try
         {
-            var settings = new GoogleJsonWebSignature.ValidationSettings
-            {
-                Audience = [_clientId]
-            };
+            var settings = new GoogleJsonWebSignature.ValidationSettings { Audience = [_clientId] };
             var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
-            return new GoogleIdentity(payload.Subject, payload.Email, payload.Name);
+            return new GoogleIdentity(
+                payload.Subject,
+                payload.Email,
+                payload.Name,
+                payload.Picture
+            );
         }
         catch (InvalidJwtException)
         {
