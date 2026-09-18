@@ -7,6 +7,7 @@ export interface SharedWithMeResponse {
   resourceName: string;
   sharedByName: string;
   sharedByEmail: string;
+  sharedByPictureUrl: string | null;
   permission: 'Viewer' | 'Editor';
   sharedAt: string;
 }

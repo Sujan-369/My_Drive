@@ -1,38 +1,35 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { useFolders, useCreateFolder, useDeleteFolder, useToggleStarFolder } from '../folders/useFolders';
 import { useFiles, useUploadFile, useDeleteFile, useToggleStarFile } from './useFiles';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { NewFolderDialog } from '../folders/NewFolderDialog';
-import { Folder, FileText, Upload, ChevronRight, Trash2, Star } from 'lucide-react';
-import { Share2 } from 'lucide-react';
 import { ShareDialog } from '../sharing/ShareDialog';
-import { Download } from 'lucide-react';
 import { downloadFile } from '@/lib/downloadFile';
+import { Folder, FileText, Upload, ChevronRight, Trash2, Star, Share2, Download } from 'lucide-react';
 
 interface BreadcrumbEntry {
   id: string | null;
   name: string;
 }
 
-const listVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.03 } },
-};
-const itemVariants = {
-  hidden: { opacity: 0, y: 4 },
-  visible: { opacity: 1, y: 0 },
-};
-
 interface FileBrowserProps {
   onOpenPreview: (fileId: string) => void;
 }
+
+type SortKey = 'name' | 'modified' | 'size';
+
+const listVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.03 } } };
+const itemVariants = { hidden: { opacity: 0, y: 4 }, visible: { opacity: 1, y: 0 } };
 
 export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbEntry[]>([{ id: null, name: 'My Drive' }]);
   const currentFolderId = breadcrumbs[breadcrumbs.length - 1].id;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [shareTarget, setShareTarget] = useState<{ type: 'folders' | 'files'; id: string; name: string } | null>(null);
 
   const { data: folders, isLoading: foldersLoading } = useFolders(currentFolderId);
   const { data: files, isLoading: filesLoading } = useFiles(currentFolderId);
@@ -42,16 +39,36 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
   const deleteFile = useDeleteFile(currentFolderId);
   const toggleStarFolder = useToggleStarFolder(currentFolderId);
   const toggleStarFile = useToggleStarFile(currentFolderId);
-  
-  const [shareTarget, setShareTarget] = useState<{ type: 'folders' | 'files'; id: string; name: string } | null>(null);
 
   const isLoading = foldersLoading || filesLoading;
-  const hasContent = (folders?.length ?? 0) > 0 || (files?.length ?? 0) > 0;
 
-  const navigateInto = (id: string, name: string) =>
-    setBreadcrumbs((prev) => [...prev, { id, name }]);
-  const navigateToBreadcrumb = (index: number) =>
-    setBreadcrumbs((prev) => prev.slice(0, index + 1));
+  const sortedFolders = useMemo(
+    () =>
+      [...(folders ?? [])].sort((a, b) =>
+        sortKey === 'modified' ? +new Date(b.modifiedAt) - +new Date(a.modifiedAt) : a.name.localeCompare(b.name)
+      ),
+    [folders, sortKey]
+  );
+  const sortedFiles = useMemo(
+    () =>
+      [...(files ?? [])].sort((a, b) => {
+        if (sortKey === 'size') return b.size - a.size;
+        if (sortKey === 'modified') return +new Date(b.modifiedAt) - +new Date(a.modifiedAt);
+        return a.name.localeCompare(b.name);
+      }),
+    [files, sortKey]
+  );
+
+  const SORT_OPTIONS = [
+    { value: 'name', label: 'Name' },
+    { value: 'modified', label: 'Last modified' },
+    { value: 'size', label: 'Size' },
+  ] as const;
+
+  const hasContent = sortedFolders.length > 0 || sortedFiles.length > 0;
+
+  const navigateInto = (id: string, name: string) => setBreadcrumbs((prev) => [...prev, { id, name }]);
+  const navigateToBreadcrumb = (index: number) => setBreadcrumbs((prev) => prev.slice(0, index + 1));
 
   const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,28 +83,36 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
   };
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       <nav className="mb-4 flex items-center gap-1 text-sm text-muted-foreground">
         {breadcrumbs.map((crumb, index) => (
           <span key={crumb.id ?? 'root'} className="flex items-center gap-1">
             {index > 0 && <ChevronRight className="size-3.5" />}
-            <button
-              onClick={() => navigateToBreadcrumb(index)}
-              className="rounded px-1.5 py-0.5 hover:bg-muted hover:text-foreground"
-            >
+            <button onClick={() => navigateToBreadcrumb(index)} className="rounded px-1.5 py-0.5 hover:bg-muted hover:text-foreground">
               {crumb.name}
             </button>
           </span>
         ))}
       </nav>
 
-      <div className="mb-4 flex gap-2">
-        <NewFolderDialog onCreate={(name) => createFolder.mutate(name)} isPending={createFolder.isPending} />
-        <input ref={fileInputRef} type="file" onChange={handleFileSelected} className="hidden" />
-        <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadFile.isPending}>
+      <div className="mb-4 flex items-center gap-2">
+        <Button onClick={() => fileInputRef.current?.click()} disabled={uploadFile.isPending}>
           <Upload className="size-4" />
           {uploadFile.isPending ? 'Uploading...' : 'Upload File'}
         </Button>
+        <input ref={fileInputRef} type="file" onChange={handleFileSelected} className="hidden" />
+        <NewFolderDialog onCreate={(name) => createFolder.mutate(name)} isPending={createFolder.isPending} />
+
+        <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)} items={SORT_OPTIONS}>
+          <SelectTrigger className="ml-auto w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SORT_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="rounded-lg border">
@@ -102,35 +127,21 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
           </div>
         )}
 
-        {!isLoading && !hasContent && (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">This folder is empty.</p>
-        )}
+        {!isLoading && !hasContent && <p className="px-4 py-8 text-center text-sm text-muted-foreground">This folder is empty.</p>}
 
         {!isLoading && hasContent && (
           <motion.div className="divide-y" variants={listVariants} initial="hidden" animate="visible">
-            
-            {folders?.map((folder) => (
+            {sortedFolders.map((folder) => (
               <motion.div key={folder.id} variants={itemVariants} className="flex items-center gap-3 px-4 py-3 hover:bg-muted">
                 <button onClick={() => navigateInto(folder.id, folder.name)} className="flex flex-1 items-center gap-3 text-left">
                   <Folder className="size-5 shrink-0 text-muted-foreground" />
                   <span className="truncate">{folder.name}</span>
-                  {folder.isShared && (
-                    <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                      Shared
-                    </span>
-                  )}
                 </button>
-
+                {folder.isShared && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Shared</span>}
                 <Button variant="ghost" size="icon" onClick={() => setShareTarget({ type: 'folders', id: folder.id, name: folder.name })} title="Share">
                   <Share2 className="size-4 text-muted-foreground" />
                 </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => toggleStarFolder.mutate({ id: folder.id, starred: folder.isStarred })}
-                  title={folder.isStarred ? 'Unstar' : 'Star'}
-                >
+                <Button variant="ghost" size="icon" onClick={() => toggleStarFolder.mutate({ id: folder.id, starred: folder.isStarred })}>
                   <Star className={`size-4 ${folder.isStarred ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => deleteFolder.mutate(folder.id)} title="Delete">
@@ -138,49 +149,32 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                 </Button>
               </motion.div>
             ))}
-
-            {files?.map((file) => (
+            {sortedFiles.map((file) => (
               <motion.div key={file.id} variants={itemVariants} className="flex items-center gap-3 px-4 py-3">
                 <FileText className="size-5 shrink-0 text-muted-foreground" />
-                <button
-                  onClick={() => onOpenPreview(file.id)}
-                  className="flex-1 truncate text-left text-sm hover:underline"
-                >
+                <button onClick={() => onOpenPreview(file.id)} className="flex-1 truncate text-left text-sm hover:underline">
                   {file.name}
                 </button>
-                {file.isShared && (
-                  <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                    Shared
-                  </span>
-                )}
+                {file.isShared && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Shared</span>}
                 <span className="shrink-0 text-xs text-muted-foreground">{formatSize(file.size)}</span>
-                
                 <Button variant="ghost" size="icon" onClick={() => setShareTarget({ type: 'files', id: file.id, name: file.name })} title="Share">
                   <Share2 className="size-4 text-muted-foreground" />
                 </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => toggleStarFile.mutate({ id: file.id, starred: file.isStarred })}
-                  title={file.isStarred ? 'Unstar' : 'Star'}
-                >
+                <Button variant="ghost" size="icon" onClick={() => toggleStarFile.mutate({ id: file.id, starred: file.isStarred })}>
                   <Star className={`size-4 ${file.isStarred ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
                 </Button>
-
                 <Button variant="ghost" size="icon" onClick={() => deleteFile.mutate(file.id)} title="Delete">
                   <Trash2 className="size-4 text-muted-foreground" />
                 </Button>
-
                 <Button variant="ghost" size="icon" onClick={() => downloadFile(file.id, file.name)} title="Download">
                   <Download className="size-4 text-muted-foreground" />
                 </Button>
-
               </motion.div>
             ))}
           </motion.div>
         )}
       </div>
+
       {shareTarget && (
         <ShareDialog
           open={shareTarget !== null}

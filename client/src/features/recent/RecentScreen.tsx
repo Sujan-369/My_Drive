@@ -62,14 +62,14 @@ export function RecentScreen({ onOpenPreview }: RecentScreenProps) {
   const groups = activity ? groupByDay(activity) : [];
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       {isLoading && <p className="text-sm text-muted-foreground">Loading...</p>}
       {!isLoading && groups.length === 0 && (
         <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">No recent activity.</p>
       )}
       {groups.map((group) => (
         <div key={group.label} className="mb-6">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</h2>
+          <h2 className="mb-2 text-sm font-semibold text-foreground">{group.label}</h2>
           <div className="rounded-lg border divide-y">
             {group.entries.map((entry) => (
               <div key={entry.id} className="flex items-center gap-3 px-4 py-3">

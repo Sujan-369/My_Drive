@@ -23,6 +23,7 @@ public sealed class SharesController(
                 s.ResourceName,
                 s.SharedByName,
                 s.SharedByEmail,
+                s.SharedByPictureUrl,
                 s.Permission.ToString(),
                 s.SharedAt
             ))

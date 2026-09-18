@@ -18,6 +18,7 @@ public sealed record SharedWithMeResponse(
     string ResourceName,
     string SharedByName,
     string SharedByEmail,
+    string? SharedByPictureUrl,
     string Permission,
     DateTime SharedAt
 );

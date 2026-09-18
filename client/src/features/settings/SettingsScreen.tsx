@@ -1,20 +1,16 @@
-import { useState } from 'react';
 import type { AuthResponse } from '../auth/authApi';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ExternalLink, LogOut } from 'lucide-react';
 
 interface SettingsScreenProps {
   auth: AuthResponse;
   onBack: () => void;
+  onSignOut: () => void;
 }
 
-type Tab = 'profile' | 'security';
-
-export function SettingsScreen({ auth, onBack }: SettingsScreenProps) {
-  const [tab, setTab] = useState<Tab>('profile');
-
+export function SettingsScreen({ auth, onBack, onSignOut }: SettingsScreenProps) {
   return (
-    <div className="mx-auto max-w-2xl">
+    <div>
       <div className="mb-4 flex items-center gap-2">
         <Button variant="ghost" size="icon" onClick={onBack}>
           <ArrowLeft className="size-4" />
@@ -22,23 +18,9 @@ export function SettingsScreen({ auth, onBack }: SettingsScreenProps) {
         <span className="font-medium">Settings</span>
       </div>
 
-      <div className="mb-4 flex gap-1 border-b">
-        <button
-          onClick={() => setTab('profile')}
-          className={`px-3 py-2 text-sm ${tab === 'profile' ? 'border-b-2 border-primary font-medium text-primary' : 'text-muted-foreground'}`}
-        >
-          Profile
-        </button>
-        <button
-          onClick={() => setTab('security')}
-          className={`px-3 py-2 text-sm ${tab === 'security' ? 'border-b-2 border-primary font-medium text-primary' : 'text-muted-foreground'}`}
-        >
-          Security
-        </button>
-      </div>
-
-      {tab === 'profile' && (
+      <div className="max-w-2xl space-y-4">
         <div className="rounded-lg border p-6">
+          <h3 className="mb-4 text-sm font-semibold text-foreground">Profile</h3>
           <div className="mb-4 flex items-center gap-3">
             {auth.pictureUrl ? (
               <img src={auth.pictureUrl} alt={auth.displayName} className="size-16 rounded-full" referrerPolicy="no-referrer" />
@@ -56,11 +38,9 @@ export function SettingsScreen({ auth, onBack }: SettingsScreenProps) {
             Your name, email, and photo are synced from your Google account and can't be edited here.
           </p>
         </div>
-      )}
 
-      {tab === 'security' && (
         <div className="rounded-lg border p-6">
-          <h3 className="mb-1 text-sm font-medium">Account security</h3>
+          <h3 className="mb-1 text-sm font-semibold text-foreground">Account security</h3>
           <p className="mb-3 text-sm text-muted-foreground">
             This app uses Google Sign-In — there's no separate password to manage here. Change your password, review devices, or enable two-factor authentication directly through your Google Account.
           </p>
@@ -74,7 +54,16 @@ export function SettingsScreen({ auth, onBack }: SettingsScreenProps) {
             }
           />
         </div>
-      )}
+
+        <div className="rounded-lg border p-6">
+          <h3 className="mb-1 text-sm font-semibold text-foreground">Sign out</h3>
+          <p className="mb-3 text-sm text-muted-foreground">Sign out of My Drive on this device.</p>
+          <Button variant="outline" onClick={onSignOut}>
+            <LogOut className="size-4" />
+            Sign out
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

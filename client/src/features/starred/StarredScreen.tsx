@@ -12,7 +12,7 @@ export function StarredScreen() {
   const hasContent = (folders?.length ?? 0) > 0 || (files?.length ?? 0) > 0;
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       {!hasContent && (
         <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">
           Star important files and folders for quick access.

@@ -33,7 +33,7 @@ export function TrashScreen() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       <div className="mb-4 flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm">
         <span className="text-muted-foreground">Items in Trash are automatically deleted forever after 30 days.</span>
       </div>

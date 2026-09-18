@@ -9,6 +9,6 @@ public sealed record SharedResourceInfo(
     string ResourceName,
     string SharedByEmail,
     string SharedByName,
+    string? SharedByPictureUrl,
     SharePermission Permission,
-    DateTime SharedAt
-);
+    DateTime SharedAt);
