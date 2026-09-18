@@ -40,7 +40,7 @@ export function SearchScreen({ query, onOpenPreview }: SearchScreenProps) {
   }, [results, activeCategory]);
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       <div className="mb-4 flex items-center gap-2">
         {categories.map((category) => (
           <button

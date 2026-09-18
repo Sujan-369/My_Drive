@@ -74,6 +74,7 @@ public sealed class ShareRepository(ApplicationDbContext dbContext) : IShareRepo
                     resourceName,
                     sharer.Email,
                     sharer.DisplayName,
+                    sharer.PictureUrl,
                     share.Permission,
                     share.CreatedAt
                 )

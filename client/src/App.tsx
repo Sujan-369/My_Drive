@@ -30,31 +30,16 @@ function App() {
       setAuth(null);
       return;
     }
-
     authApi.getMe()
-      .then((user) => {
-        setAuth({
-          token,
-          userId: user.userId,
-          organizationId: user.organizationId,
-          email: user.email,
-          displayName: user.displayName,
-          pictureUrl: user.pictureUrl,
-        });
-      })
+      .then((user) => setAuth({ token, userId: user.userId, organizationId: user.organizationId, email: user.email, displayName: user.displayName, pictureUrl: user.pictureUrl }))
       .catch(() => {
         localStorage.removeItem('auth_token');
         setAuth(null);
       });
   }, []);
 
-  useEffect(() => {
-    sessionStorage.setItem('view', view);
-  }, [view]);
-
-  useEffect(() => {
-    sessionStorage.setItem('searchQuery', searchQuery);
-  }, [searchQuery]);
+  useEffect(() => { sessionStorage.setItem('view', view); }, [view]);
+  useEffect(() => { sessionStorage.setItem('searchQuery', searchQuery); }, [searchQuery]);
 
   const handleSignedIn = (result: AuthResponse) => {
     setAuth(result);
@@ -66,9 +51,6 @@ function App() {
     setAuth(null);
   };
 
-  // Every navigation/search/settings action clears whatever overlay
-  // (Preview, Settings) is open first — previewFileId and view are
-  // independent state, so nothing else guarantees only one is visible.
   const handleNavigate = (next: View) => {
     setPreviewFileId(null);
     setShowSettings(false);
@@ -118,7 +100,7 @@ function App() {
             userName={auth.displayName}
             userEmail={auth.email}
             userPictureUrl={auth.pictureUrl}
-            onSignOut={handleSignOut}
+            searchValue={searchQuery}
             onSearch={handleSearch}
             onOpenSettings={handleOpenSettings}
           >
@@ -126,7 +108,7 @@ function App() {
               <Sidebar activeView={view} onNavigate={handleNavigate} />
               <div className="flex-1">
                 {showSettings ? (
-                  <SettingsScreen auth={auth} onBack={() => setShowSettings(false)} />
+                  <SettingsScreen auth={auth} onBack={() => setShowSettings(false)} onSignOut={handleSignOut} />
                 ) : previewFileId ? (
                   <PreviewScreen fileId={previewFileId} onBack={() => setPreviewFileId(null)} />
                 ) : (

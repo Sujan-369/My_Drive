@@ -48,7 +48,7 @@ export function HomeScreen({ onOpenPreview }: { onOpenPreview: (fileId: string) 
   };
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       <h1 className="mb-1 text-xl font-semibold">Welcome back</h1>
       <p className="mb-6 text-sm text-muted-foreground">Here's an overview of your workspace today.</p>
 

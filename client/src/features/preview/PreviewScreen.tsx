@@ -55,7 +55,7 @@ export function PreviewScreen({ fileId, onBack }: PreviewScreenProps) {
 
         <div className="space-y-6">
           <div>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Properties</h3>
+            <h3 className="mb-2 text-sm font-semibold text-foreground">Properties</h3>
             <dl className="space-y-2 text-sm">
               <div>
                 <dt className="text-xs text-muted-foreground">Size</dt>
@@ -73,7 +73,7 @@ export function PreviewScreen({ fileId, onBack }: PreviewScreenProps) {
           </div>
 
           <div>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Shared with</h3>
+            <h3 className="mb-2 text-sm font-semibold text-foreground">Shared with</h3>
             {(shares?.length ?? 0) === 0 && <p className="text-sm text-muted-foreground">Not shared with anyone yet.</p>}
             <div className="space-y-2">
               {shares?.map((share) => (
@@ -93,7 +93,7 @@ export function PreviewScreen({ fileId, onBack }: PreviewScreenProps) {
           </div>
 
           <div>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Version History</h3>
+            <h3 className="mb-2 text-sm font-semibold text-foreground">Version History</h3>
             <div className="space-y-2">
               {file.versions.map((version, index) => (
                   <div key={version.id} className="text-sm">
