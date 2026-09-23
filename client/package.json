@@ -21,7 +21,7 @@
     "lucide-react": "^1.42.0",
     "motion": "^13.3.0",
     "pdfjs-dist": "^6.3.289",
-    "react": "^19.2.8",
+    "react": "^19.3.0",
     "react-dom": "^19.2.8",
     "shadcn": "^4.21.0",
     "tailwind-merge": "^3.6.0",
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.5.0",
-    "@types/react": "^19.2.18",
+    "@types/react": "^19.3.0",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.0",
     "oxlint": "^1.82.0",
