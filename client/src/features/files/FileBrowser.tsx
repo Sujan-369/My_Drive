@@ -158,13 +158,13 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                     <Button variant="ghost" size="icon" onClick={() => toggleStarFolder.mutate({ id: folder.id, starred: folder.isStarred })}>
                       <Star className={`size-4 ${folder.isStarred ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteFile.mutate(folder.id)} title="Delete">
+                    <Button variant="ghost" size="icon" onClick={() => deleteFolder.mutate(folder.id)} title="Delete">
                       <Trash2 className="size-4 text-muted-foreground" />
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => downloadFile(folder.id, folder.name)} title="Download">
                       <Download className="size-4 text-muted-foreground" />
                     </Button>
-                  </div>
+                  </div>  
                 </div>
                 {folder.isStarred && (
                   <Star className="size-4 shrink-0 fill-primary text-primary group-hover:hidden" />
