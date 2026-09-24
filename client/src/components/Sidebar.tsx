@@ -1,6 +1,6 @@
 import { Home, FolderOpen, Users, Clock, Star, Trash2 } from 'lucide-react';
 
-export type View = 'home' | 'my-drive' | 'recent' | 'search' | 'shared' | 'trash' | 'starred';
+export type View = 'home' | 'my-drive' | 'recent' | 'search' | 'trash' | 'starred' | 'shared';
 
 interface NavItem {
   view: View;
@@ -25,25 +25,22 @@ interface SidebarProps {
 
 export function Sidebar({ activeView, onNavigate }: SidebarProps) {
   return (
-    <nav className="w-56 shrink-0 border-r border-border bg-sidebar px-3 py-4">
+    <nav className="w-60 shrink-0 border-r border-border bg-sidebar px-3 py-4">
       {navItems.map((item) => {
-        const isActive = item.enabled && item.view === activeView;
+        const isActive = item.view === activeView;
         return (
           <button
             key={item.label}
-            disabled={!item.enabled}
-            onClick={() => item.enabled && onNavigate(item.view)}
-            className={`mb-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+            onClick={() => onNavigate(item.view)}
+            className={`relative mb-0.5 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
               isActive
                 ? 'bg-primary/10 font-medium text-primary'
-                : item.enabled
-                  ? 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  : 'cursor-not-allowed text-muted-foreground/40'
+                : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
             }`}
           >
+            {isActive && <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-primary" />}
             <item.icon className="size-4" />
             <span className="flex-1 text-left">{item.label}</span>
-            {!item.enabled && <span className="text-[10px] uppercase tracking-wide">Soon</span>}
           </button>
         );
       })}

@@ -43,10 +43,7 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
   const isLoading = foldersLoading || filesLoading;
 
   const sortedFolders = useMemo(
-    () =>
-      [...(folders ?? [])].sort((a, b) =>
-        sortKey === 'modified' ? +new Date(b.modifiedAt) - +new Date(a.modifiedAt) : a.name.localeCompare(b.name)
-      ),
+    () => [...(folders ?? [])].sort((a, b) => (sortKey === 'modified' ? +new Date(b.modifiedAt) - +new Date(a.modifiedAt) : a.name.localeCompare(b.name))),
     [folders, sortKey]
   );
   const sortedFiles = useMemo(
@@ -59,11 +56,11 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
     [files, sortKey]
   );
 
-  const SORT_OPTIONS = [
-    { value: 'name', label: 'Name' },
-    { value: 'modified', label: 'Last modified' },
-    { value: 'size', label: 'Size' },
-  ] as const;
+  const sortLabels: Record<SortKey, string> = {
+  name: 'Name',
+  modified: 'Last modified',
+  size: 'Size',
+  };
 
   const hasContent = sortedFolders.length > 0 || sortedFiles.length > 0;
 
@@ -88,7 +85,7 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
         {breadcrumbs.map((crumb, index) => (
           <span key={crumb.id ?? 'root'} className="flex items-center gap-1">
             {index > 0 && <ChevronRight className="size-3.5" />}
-            <button onClick={() => navigateToBreadcrumb(index)} className="rounded px-1.5 py-0.5 hover:bg-muted hover:text-foreground">
+            <button onClick={() => navigateToBreadcrumb(index)} className="rounded px-1.5 py-0.5 hover:bg-white/5 hover:text-foreground">
               {crumb.name}
             </button>
           </span>
@@ -103,21 +100,21 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
         <input ref={fileInputRef} type="file" onChange={handleFileSelected} className="hidden" />
         <NewFolderDialog onCreate={(name) => createFolder.mutate(name)} isPending={createFolder.isPending} />
 
-        <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)} items={SORT_OPTIONS}>
-          <SelectTrigger className="ml-auto w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SORT_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Select value={sortKey} onValueChange={(value) => setSortKey(value as SortKey)}>
+        <SelectTrigger className="ml-auto w-40">
+          <SelectValue>{sortLabels[sortKey]}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="name">Name</SelectItem>
+          <SelectItem value="modified">Last modified</SelectItem>
+          <SelectItem value="size">Size</SelectItem>
+        </SelectContent>
+      </Select>
       </div>
 
-      <div className="rounded-lg border">
+      <div className="overflow-hidden rounded-xl border border-border">
         {isLoading && (
-          <div className="divide-y">
+          <div className="divide-y divide-border">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-3 px-4 py-3">
                 <Skeleton className="size-5 rounded" />
@@ -127,48 +124,90 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
           </div>
         )}
 
-        {!isLoading && !hasContent && <p className="px-4 py-8 text-center text-sm text-muted-foreground">This folder is empty.</p>}
+        {!isLoading && !hasContent && (
+          <div className="px-4 py-16 text-center">
+            <Folder className="mx-auto mb-3 size-8 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">This folder is empty.</p>
+          </div>
+        )}
 
         {!isLoading && hasContent && (
-          <motion.div className="divide-y" variants={listVariants} initial="hidden" animate="visible">
+          <motion.div className="divide-y divide-border" variants={listVariants} initial="hidden" animate="visible">
             {sortedFolders.map((folder) => (
-              <motion.div key={folder.id} variants={itemVariants} className="flex items-center gap-3 px-4 py-3 hover:bg-muted">
+              <motion.div
+                key={folder.id}
+                variants={itemVariants}
+                className="group relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.03]"
+              >
+                <span className="absolute inset-y-0 left-0 w-0.5 bg-primary opacity-0 transition-opacity group-hover:opacity-100" />
                 <button onClick={() => navigateInto(folder.id, folder.name)} className="flex flex-1 items-center gap-3 text-left">
                   <Folder className="size-5 shrink-0 text-muted-foreground" />
                   <span className="truncate">{folder.name}</span>
                 </button>
                 {folder.isShared && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Shared</span>}
-                <Button variant="ghost" size="icon" onClick={() => setShareTarget({ type: 'folders', id: folder.id, name: folder.name })} title="Share">
-                  <Share2 className="size-4 text-muted-foreground" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => toggleStarFolder.mutate({ id: folder.id, starred: folder.isStarred })}>
-                  <Star className={`size-4 ${folder.isStarred ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => deleteFolder.mutate(folder.id)} title="Delete">
-                  <Trash2 className="size-4 text-muted-foreground" />
-                </Button>
+                <div className="relative flex h-8 shrink-0 items-center">
+                  <Star
+                    className={`absolute right-1 size-4 fill-primary text-primary transition-opacity duration-150 ${
+                      folder.isStarred ? 'opacity-100 group-hover:opacity-0' : 'opacity-0'
+                    }`}
+                  />
+                  <div className="flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                    <Button variant="ghost" size="icon" onClick={() => setShareTarget({ type: 'files', id: folder.id, name: folder.name })} title="Share">
+                      <Share2 className="size-4 text-muted-foreground" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => toggleStarFolder.mutate({ id: folder.id, starred: folder.isStarred })}>
+                      <Star className={`size-4 ${folder.isStarred ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => deleteFile.mutate(folder.id)} title="Delete">
+                      <Trash2 className="size-4 text-muted-foreground" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => downloadFile(folder.id, folder.name)} title="Download">
+                      <Download className="size-4 text-muted-foreground" />
+                    </Button>
+                  </div>
+                </div>
+                {folder.isStarred && (
+                  <Star className="size-4 shrink-0 fill-primary text-primary group-hover:hidden" />
+                )}
               </motion.div>
             ))}
             {sortedFiles.map((file) => (
-              <motion.div key={file.id} variants={itemVariants} className="flex items-center gap-3 px-4 py-3">
+              <motion.div
+                key={file.id}
+                variants={itemVariants}
+                className="group relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.03]"
+              >
+                <span className="absolute inset-y-0 left-0 w-0.5 bg-primary opacity-0 transition-opacity group-hover:opacity-100" />
                 <FileText className="size-5 shrink-0 text-muted-foreground" />
                 <button onClick={() => onOpenPreview(file.id)} className="flex-1 truncate text-left text-sm hover:underline">
                   {file.name}
                 </button>
                 {file.isShared && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Shared</span>}
                 <span className="shrink-0 text-xs text-muted-foreground">{formatSize(file.size)}</span>
-                <Button variant="ghost" size="icon" onClick={() => setShareTarget({ type: 'files', id: file.id, name: file.name })} title="Share">
-                  <Share2 className="size-4 text-muted-foreground" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => toggleStarFile.mutate({ id: file.id, starred: file.isStarred })}>
-                  <Star className={`size-4 ${file.isStarred ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => deleteFile.mutate(file.id)} title="Delete">
-                  <Trash2 className="size-4 text-muted-foreground" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => downloadFile(file.id, file.name)} title="Download">
-                  <Download className="size-4 text-muted-foreground" />
-                </Button>
+                <div className="relative flex h-8 shrink-0 items-center">
+                  <Star
+                    className={`absolute right-1 size-4 fill-primary text-primary transition-opacity duration-150 ${
+                      file.isStarred ? 'opacity-100 group-hover:opacity-0' : 'opacity-0'
+                    }`}
+                  />
+                  <div className="flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                    <Button variant="ghost" size="icon" onClick={() => setShareTarget({ type: 'files', id: file.id, name: file.name })} title="Share">
+                      <Share2 className="size-4 text-muted-foreground" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => toggleStarFile.mutate({ id: file.id, starred: file.isStarred })}>
+                      <Star className={`size-4 ${file.isStarred ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => deleteFile.mutate(file.id)} title="Delete">
+                      <Trash2 className="size-4 text-muted-foreground" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => downloadFile(file.id, file.name)} title="Download">
+                      <Download className="size-4 text-muted-foreground" />
+                    </Button>
+                  </div>
+                </div>
+                {file.isStarred && (
+                  <Star className="size-4 shrink-0 fill-primary text-primary group-hover:hidden" />
+                )}
               </motion.div>
             ))}
           </motion.div>

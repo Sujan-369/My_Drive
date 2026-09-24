@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useStorageUsage } from '../organization/useOrganization';
-import { useRecentFiles } from '../files/useFiles';
-import { useUploadFile } from '../files/useFiles';
+import { useRecentFiles, useUploadFile } from '../files/useFiles';
 import { useRecentActivity } from '../activity/useActivity';
 import { FileText, UploadCloud } from 'lucide-react';
+
+interface HomeScreenProps {
+  onOpenPreview: (fileId: string) => void;
+}
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -23,17 +26,11 @@ function formatRelativeTime(iso: string): string {
 }
 
 const actionLabels: Record<string, string> = {
-  Created: 'created',
-  Uploaded: 'uploaded',
-  Renamed: 'renamed',
-  Moved: 'moved',
-  Deleted: 'deleted',
-  Restored: 'restored',
-  Starred: 'starred',
-  Unstarred: 'unstarred',
+  Created: 'created', Uploaded: 'uploaded', Renamed: 'renamed', Moved: 'moved',
+  Deleted: 'deleted', Restored: 'restored', Shared: 'shared',
 };
 
-export function HomeScreen({ onOpenPreview }: { onOpenPreview: (fileId: string) => void }) {
+export function HomeScreen({ onOpenPreview }: HomeScreenProps) {
   const { data: usage } = useStorageUsage();
   const { data: recentFiles } = useRecentFiles(5);
   const { data: activity } = useRecentActivity(8);
@@ -52,17 +49,17 @@ export function HomeScreen({ onOpenPreview }: { onOpenPreview: (fileId: string) 
       <h1 className="mb-1 text-xl font-semibold">Welcome back</h1>
       <p className="mb-6 text-sm text-muted-foreground">Here's an overview of your workspace today.</p>
 
-      <div className="mb-6 grid grid-cols-2 gap-4">
-        <div className="rounded-lg border p-4">
+      <div className="mb-8 grid grid-cols-2 gap-4">
+        <div className="rounded-xl border border-border bg-card p-5">
           <div className="mb-1 text-sm text-muted-foreground">Storage used</div>
-          <div className="text-2xl font-bold">{usage ? formatBytes(usage.totalBytes) : '—'}</div>
+          <div className="text-2xl font-semibold">{usage ? formatBytes(usage.totalBytes) : '—'}</div>
         </div>
 
         <div
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
-          className={`flex flex-col items-center justify-center rounded-lg border border-dashed p-4 text-center transition-colors ${
+          className={`flex flex-col items-center justify-center rounded-xl border border-dashed p-5 text-center transition-colors ${
             isDragging ? 'border-primary bg-primary/5' : 'border-border'
           }`}
         >
@@ -73,32 +70,39 @@ export function HomeScreen({ onOpenPreview }: { onOpenPreview: (fileId: string) 
         </div>
       </div>
 
-      <div className="mb-6">
-        <h2 className="mb-2 text-sm font-medium text-muted-foreground">Recent Files</h2>
-        <div className="rounded-lg border divide-y">
+      <div className="mb-8">
+        <h2 className="mb-2 text-sm font-semibold text-foreground">Recent Files</h2>
+        <div className="overflow-hidden rounded-xl border border-border">
           {(recentFiles?.length ?? 0) === 0 && (
-            <p className="px-4 py-6 text-center text-sm text-muted-foreground">No files yet.</p>
+            <p className="px-4 py-8 text-center text-sm text-muted-foreground">No files yet.</p>
           )}
-          {recentFiles?.map((file) => (
-            <div key={file.id} className="flex items-center gap-3 px-4 py-3">
+          {recentFiles?.map((file, i) => (
+            <button
+              key={file.id}
+              onClick={() => onOpenPreview(file.id)}
+              className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.03] ${
+                i > 0 ? 'border-t border-border' : ''
+              }`}
+            >
               <FileText className="size-4 shrink-0 text-muted-foreground" />
-              <button onClick={() => onOpenPreview(file.id)} className="flex-1 truncate text-left text-sm hover:underline">
-                {file.name}
-              </button>
+              <span className="flex-1 truncate text-sm">{file.name}</span>
               <span className="shrink-0 text-xs text-muted-foreground">{formatRelativeTime(file.modifiedAt)}</span>
-            </div>
+            </button>
           ))}
         </div>
       </div>
 
       <div>
-        <h2 className="mb-2 text-sm font-medium text-muted-foreground">Recent Activity</h2>
-        <div className="rounded-lg border divide-y">
+        <h2 className="mb-2 text-sm font-semibold text-foreground">Recent Activity</h2>
+        <div className="overflow-hidden rounded-xl border border-border">
           {(activity?.length ?? 0) === 0 && (
-            <p className="px-4 py-6 text-center text-sm text-muted-foreground">No activity yet.</p>
+            <p className="px-4 py-8 text-center text-sm text-muted-foreground">No activity yet.</p>
           )}
-          {activity?.map((entry) => (
-            <div key={entry.id} className="flex items-center gap-2 px-4 py-3 text-sm">
+          {activity?.map((entry, i) => (
+            <div
+              key={entry.id}
+              className={`flex items-center gap-2 px-4 py-3 text-sm ${i > 0 ? 'border-t border-border' : ''}`}
+            >
               <span className="text-muted-foreground">You {actionLabels[entry.action] ?? entry.action.toLowerCase()}</span>
               <span className="truncate font-medium">{entry.resourceName}</span>
               <span className="ml-auto shrink-0 text-xs text-muted-foreground">{formatRelativeTime(entry.createdAt)}</span>
