@@ -21,6 +21,12 @@ interface FileBrowserProps {
 
 type SortKey = 'name' | 'modified' | 'size';
 
+const sortLabels: Record<SortKey, string> = {
+  name: 'Name',
+  modified: 'Last modified',
+  size: 'Size',
+};
+
 const listVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.03 } } };
 const itemVariants = { hidden: { opacity: 0, y: 4 }, visible: { opacity: 1, y: 0 } };
 
@@ -55,12 +61,6 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
       }),
     [files, sortKey]
   );
-
-  const sortLabels: Record<SortKey, string> = {
-  name: 'Name',
-  modified: 'Last modified',
-  size: 'Size',
-  };
 
   const hasContent = sortedFolders.length > 0 || sortedFiles.length > 0;
 
@@ -101,15 +101,15 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
         <NewFolderDialog onCreate={(name) => createFolder.mutate(name)} isPending={createFolder.isPending} />
 
         <Select value={sortKey} onValueChange={(value) => setSortKey(value as SortKey)}>
-        <SelectTrigger className="ml-auto w-40">
-          <SelectValue>{sortLabels[sortKey]}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="name">Name</SelectItem>
-          <SelectItem value="modified">Last modified</SelectItem>
-          <SelectItem value="size">Size</SelectItem>
-        </SelectContent>
-      </Select>
+          <SelectTrigger className="ml-auto w-40">
+            <SelectValue>{sortLabels[sortKey]}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="name">Name</SelectItem>
+            <SelectItem value="modified">Last modified</SelectItem>
+            <SelectItem value="size">Size</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-border">
@@ -145,6 +145,7 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                   <span className="truncate">{folder.name}</span>
                 </button>
                 {folder.isShared && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Shared</span>}
+
                 <div className="relative flex h-8 shrink-0 items-center">
                   <Star
                     className={`absolute right-1 size-4 fill-primary text-primary transition-opacity duration-150 ${
@@ -152,7 +153,7 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                     }`}
                   />
                   <div className="flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                    <Button variant="ghost" size="icon" onClick={() => setShareTarget({ type: 'files', id: folder.id, name: folder.name })} title="Share">
+                    <Button variant="ghost" size="icon" onClick={() => setShareTarget({ type: 'folders', id: folder.id, name: folder.name })} title="Share">
                       <Share2 className="size-4 text-muted-foreground" />
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => toggleStarFolder.mutate({ id: folder.id, starred: folder.isStarred })}>
@@ -161,14 +162,8 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                     <Button variant="ghost" size="icon" onClick={() => deleteFolder.mutate(folder.id)} title="Delete">
                       <Trash2 className="size-4 text-muted-foreground" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => downloadFile(folder.id, folder.name)} title="Download">
-                      <Download className="size-4 text-muted-foreground" />
-                    </Button>
-                  </div>  
+                  </div>
                 </div>
-                {folder.isStarred && (
-                  <Star className="size-4 shrink-0 fill-primary text-primary group-hover:hidden" />
-                )}
               </motion.div>
             ))}
             {sortedFiles.map((file) => (
@@ -184,6 +179,7 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                 </button>
                 {file.isShared && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Shared</span>}
                 <span className="shrink-0 text-xs text-muted-foreground">{formatSize(file.size)}</span>
+
                 <div className="relative flex h-8 shrink-0 items-center">
                   <Star
                     className={`absolute right-1 size-4 fill-primary text-primary transition-opacity duration-150 ${
@@ -205,9 +201,6 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                     </Button>
                   </div>
                 </div>
-                {file.isStarred && (
-                  <Star className="size-4 shrink-0 fill-primary text-primary group-hover:hidden" />
-                )}
               </motion.div>
             ))}
           </motion.div>
