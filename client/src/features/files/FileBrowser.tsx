@@ -137,7 +137,7 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
               <motion.div
                 key={folder.id}
                 variants={itemVariants}
-                className="group relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.03]"
+                className="group relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/3"
               >
                 <span className="absolute inset-y-0 left-0 w-0.5 bg-primary opacity-0 transition-opacity group-hover:opacity-100" />
                 <button onClick={() => navigateInto(folder.id, folder.name)} className="flex flex-1 items-center gap-3 text-left">
@@ -170,7 +170,7 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
               <motion.div
                 key={file.id}
                 variants={itemVariants}
-                className="group relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.03]"
+                className="group relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/3"
               >
                 <span className="absolute inset-y-0 left-0 w-0.5 bg-primary opacity-0 transition-opacity group-hover:opacity-100" />
                 <FileText className="size-5 shrink-0 text-muted-foreground" />

@@ -1,14 +1,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useCreateShare } from './useSharing';
+import { Eye, Pencil, UserPlus } from 'lucide-react';
 
 interface ShareDialogProps {
   open: boolean;
@@ -35,9 +30,12 @@ export function ShareDialog({ open, onOpenChange, resourceType, resourceId, reso
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Share "{resourceName}"</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="size-4 text-primary" />
+            Share "{resourceName}"
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <Input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -45,25 +43,29 @@ export function ShareDialog({ open, onOpenChange, resourceType, resourceId, reso
             type="email"
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           />
-          <div className="flex gap-2">
-            <Button
+          <div className="inline-flex rounded-lg border border-border bg-muted p-1">
+            <button
               type="button"
-              variant={permission === 'Viewer' ? 'default' : 'outline'}
               onClick={() => setPermission('Viewer')}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                permission === 'Viewer' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+              }`}
             >
+              <Eye className="size-3.5" />
               Viewer
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              variant={permission === 'Editor' ? 'default' : 'outline'}
               onClick={() => setPermission('Editor')}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                permission === 'Editor' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+              }`}
             >
+              <Pencil className="size-3.5" />
               Editor
-            </Button>
+            </button>
           </div>
-          {createShare.isError && (
-            <p className="text-sm text-destructive">Couldn't share — check the email address and try again.</p>
-          )}
+          {createShare.isError && <p className="text-sm text-destructive">Couldn't share — check the email address and try again.</p>}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
