@@ -42,7 +42,7 @@ export function PreviewScreen({ fileId, onBack }: PreviewScreenProps) {
       </div>
 
       <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 flex items-center justify-center rounded-lg border bg-muted/30 p-6">
+        <div className="col-span-2 flex items-center justify-center rounded-xl border border-border bg-muted/30 p-6">
         {file.name.toLowerCase().endsWith('.pdf') ? (
             <PdfPreview fileId={file.id} />
         ) : (
@@ -54,8 +54,8 @@ export function PreviewScreen({ fileId, onBack }: PreviewScreenProps) {
         </div>
 
         <div className="space-y-6">
-          <div>
-            <h3 className="mb-2 text-sm font-semibold text-foreground">Properties</h3>
+          <div className="rounded-xl border border-border p-4">
+            <h3 className="mb-3 text-sm font-semibold text-foreground">Properties</h3>
             <dl className="space-y-2 text-sm">
               <div>
                 <dt className="text-xs text-muted-foreground">Size</dt>
@@ -72,8 +72,8 @@ export function PreviewScreen({ fileId, onBack }: PreviewScreenProps) {
             </dl>
           </div>
 
-          <div>
-            <h3 className="mb-2 text-sm font-semibold text-foreground">Shared with</h3>
+          <div className="rounded-xl border border-border p-4">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">Shared with</h3>
             {(shares?.length ?? 0) === 0 && <p className="text-sm text-muted-foreground">Not shared with anyone yet.</p>}
             <div className="space-y-2">
               {shares?.map((share) => (
@@ -92,8 +92,8 @@ export function PreviewScreen({ fileId, onBack }: PreviewScreenProps) {
             </div>
           </div>
 
-          <div>
-            <h3 className="mb-2 text-sm font-semibold text-foreground">Version History</h3>
+          <div className="rounded-xl border border-border p-4">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">Version History</h3>
             <div className="space-y-2">
               {file.versions.map((version, index) => (
                   <div key={version.id} className="text-sm">
