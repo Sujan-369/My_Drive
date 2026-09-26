@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useSearch } from './useSearch';
 import { getCategory, type SearchCategory } from './categorize';
-import { Folder, FileText } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Folder, FileText, SearchX } from 'lucide-react';
 
 interface SearchScreenProps {
   query: string;
@@ -47,9 +48,7 @@ export function SearchScreen({ query, onOpenPreview }: SearchScreenProps) {
             key={category}
             onClick={() => setActiveCategory(category)}
             className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
-              activeCategory === category
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              activeCategory === category ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }`}
           >
             {category}
@@ -62,31 +61,47 @@ export function SearchScreen({ query, onOpenPreview }: SearchScreenProps) {
         )}
       </div>
 
-      {isLoading && <p className="text-sm text-muted-foreground">Searching...</p>}
-      {!isLoading && filtered.length === 0 && (
-        <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">
-          No results found.
-        </p>
+      {isLoading && (
+        <div className="overflow-hidden rounded-xl border border-border">
+          <div className="divide-y divide-border">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3">
+                <Skeleton className="size-4 rounded" />
+                <Skeleton className="h-4 w-48" />
+              </div>
+            ))}
+          </div>
+        </div>
       )}
+
+      {!isLoading && filtered.length === 0 && (
+        <div className="rounded-xl border border-border px-4 py-16 text-center">
+          <SearchX className="mx-auto mb-3 size-8 text-muted-foreground/50" />
+          <p className="text-sm text-muted-foreground">No results found.</p>
+        </div>
+      )}
+
       {!isLoading && filtered.length > 0 && (
-        <div className="rounded-lg border divide-y">
-          {filtered.map((result) => (
-            <div key={result.id} className="flex items-center gap-3 px-4 py-3">
-              {result.type === 'Folder' ? (
-                <Folder className="size-4 shrink-0 text-muted-foreground" />
-              ) : (
-                <FileText className="size-4 shrink-0 text-muted-foreground" />
-              )}
-              {result.type === 'File' ? (
-                <button onClick={() => onOpenPreview(result.id)} className="flex-1 truncate text-left text-sm hover:underline">
-                  {highlightMatch(result.name, query)}
-                </button>
-              ) : (
-                <span className="flex-1 truncate text-sm">{highlightMatch(result.name, query)}</span>
-              )}
-              <span className="shrink-0 text-xs text-muted-foreground">{formatSize(result.size)}</span>
-            </div>
-          ))}
+        <div className="overflow-hidden rounded-xl border border-border">
+          <div className="divide-y divide-border">
+            {filtered.map((result) => (
+              <div key={result.id} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/3">
+                {result.type === 'Folder' ? (
+                  <Folder className="size-4 shrink-0 text-muted-foreground" />
+                ) : (
+                  <FileText className="size-4 shrink-0 text-muted-foreground" />
+                )}
+                {result.type === 'File' ? (
+                  <button onClick={() => onOpenPreview(result.id)} className="flex-1 truncate text-left text-sm hover:underline">
+                    {highlightMatch(result.name, query)}
+                  </button>
+                ) : (
+                  <span className="flex-1 truncate text-sm">{highlightMatch(result.name, query)}</span>
+                )}
+                <span className="shrink-0 text-xs text-muted-foreground">{formatSize(result.size)}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
