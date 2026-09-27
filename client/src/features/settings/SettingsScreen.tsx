@@ -46,6 +46,7 @@ export function SettingsScreen({ auth, onBack, onSignOut }: SettingsScreenProps)
           </p>
           <Button
             variant="outline"
+            nativeButton={false}
             render={
               <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer">
                 Manage your Google Account

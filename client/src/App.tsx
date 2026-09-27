@@ -17,6 +17,16 @@ import { SettingsScreen } from './features/settings/SettingsScreen';
 
 type AuthState = 'loading' | AuthResponse | null;
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (!payload.exp) return false;
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+}
+
 function App() {
   const [auth, setAuth] = useState<AuthState>('loading');
   const [view, setView] = useState<View>(() => (sessionStorage.getItem('view') as View) || 'home');
@@ -27,10 +37,12 @@ function App() {
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
-    if (!token) {
+    if (!token || isTokenExpired(token)) {
+      if (token) localStorage.removeItem('auth_token');
       setAuth(null);
       return;
     }
+
     authApi.getMe()
       .then((user) => setAuth({ token, userId: user.userId, organizationId: user.organizationId, email: user.email, displayName: user.displayName, pictureUrl: user.pictureUrl }))
       .catch(() => {
