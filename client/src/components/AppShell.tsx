@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Input } from '@/components/ui/input';
-import { HardDrive, Search } from 'lucide-react';
+import { HardDrive, Search, Menu } from 'lucide-react';
 
 interface AppShellProps {
   userName: string;
@@ -9,20 +9,34 @@ interface AppShellProps {
   searchValue: string;
   onSearch: (query: string) => void;
   onOpenSettings: () => void;
+  onToggleMobileMenu: () => void;
   children: ReactNode;
 }
 
-export function AppShell({ userName, userEmail, userPictureUrl, searchValue, onSearch, onOpenSettings, children }: AppShellProps) {
+export function AppShell({
+  userName,
+  userEmail,
+  userPictureUrl,
+  searchValue,
+  onSearch,
+  onOpenSettings,
+  onToggleMobileMenu,
+  children,
+}: AppShellProps) {
   return (
     <div className="min-h-screen bg-muted/20">
       <header className="border-b bg-background">
-        <div className="mx-auto flex max-w-screen-2xl items-center justify-between gap-4 px-8 py-3">
+        <div className="mx-auto flex max-w-screen-2xl items-center justify-between gap-3 px-4 py-3 md:gap-4 md:px-8">
           <div className="flex shrink-0 items-center gap-2">
+            <button onClick={onToggleMobileMenu} className="flex size-8 items-center justify-center rounded-md hover:bg-white/5 md:hidden">
+              <Menu className="size-4" />
+            </button>
             <div className="flex size-8 items-center justify-center rounded-md bg-primary/10">
               <HardDrive className="size-4 text-primary" />
             </div>
-            <span className="font-semibold">My Drive</span>
+            <span className="hidden font-semibold sm:inline">My Drive</span>
           </div>
+
           <div className="relative max-w-sm flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -32,12 +46,13 @@ export function AppShell({ userName, userEmail, userPictureUrl, searchValue, onS
               className="pl-9"
             />
           </div>
+
           <button
             onClick={onOpenSettings}
             aria-label="Account settings"
-            className="flex shrink-0 items-center gap-3 rounded-full p-0.5 pr-3 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex shrink-0 items-center gap-3 rounded-full p-0.5 pr-1 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:pr-3"
           >
-            <div className="text-right text-sm leading-tight">
+            <div className="hidden text-right text-sm leading-tight sm:block">
               <div className="font-medium">{userName}</div>
               <div className="text-xs text-muted-foreground">{userEmail}</div>
             </div>
@@ -51,7 +66,7 @@ export function AppShell({ userName, userEmail, userPictureUrl, searchValue, onS
           </button>
         </div>
       </header>
-      <main className="mx-auto max-w-screen-2xl px-8 py-8">{children}</main>
+      <main className="mx-auto max-w-screen-2xl px-4 py-6 md:px-8 md:py-8">{children}</main>
     </div>
   );
 }
