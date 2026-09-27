@@ -23,6 +23,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState(() => sessionStorage.getItem('searchQuery') || '');
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -97,26 +98,32 @@ function App() {
       ) : (
         <motion.div key="app" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
           <AppShell
-            userName={auth.displayName}
-            userEmail={auth.email}
-            userPictureUrl={auth.pictureUrl}
-            searchValue={searchQuery}
-            onSearch={handleSearch}
-            onOpenSettings={handleOpenSettings}
-          >
-            <div className="flex gap-6">
-              <Sidebar activeView={view} onNavigate={handleNavigate} />
-              <div className="flex-1">
-                {showSettings ? (
-                  <SettingsScreen auth={auth} onBack={() => setShowSettings(false)} onSignOut={handleSignOut} />
-                ) : previewFileId ? (
-                  <PreviewScreen fileId={previewFileId} onBack={() => setPreviewFileId(null)} />
-                ) : (
-                  renderView()
-                )}
+              userName={auth.displayName}
+              userEmail={auth.email}
+              userPictureUrl={auth.pictureUrl}
+              searchValue={searchQuery}
+              onSearch={handleSearch}
+              onOpenSettings={handleOpenSettings}
+              onToggleMobileMenu={() => setIsMobileMenuOpen((o) => !o)}
+            >
+              <div className="flex gap-6">
+                <Sidebar
+                  activeView={view}
+                  onNavigate={handleNavigate}
+                  isMobileOpen={isMobileMenuOpen}
+                  onMobileClose={() => setIsMobileMenuOpen(false)}
+                />
+                <div className="min-w-0 flex-1">
+                  {showSettings ? (
+                    <SettingsScreen auth={auth} onBack={() => setShowSettings(false)} onSignOut={handleSignOut} />
+                  ) : previewFileId ? (
+                    <PreviewScreen fileId={previewFileId} onBack={() => setPreviewFileId(null)} />
+                  ) : (
+                    renderView()
+                  )}
+                </div>
               </div>
-            </div>
-          </AppShell>
+            </AppShell>
         </motion.div>
       )}
     </AnimatePresence>
