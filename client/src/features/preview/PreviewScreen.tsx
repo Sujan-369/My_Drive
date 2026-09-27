@@ -27,22 +27,22 @@ export function PreviewScreen({ fileId, onBack }: PreviewScreenProps) {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={onBack}>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0">
             <ArrowLeft className="size-4" />
           </Button>
-          <span className="font-medium">{file.name}</span>
-          {file.isStarred && <Star className="size-4 fill-primary text-primary" />}
+          <span className="truncate font-medium">{file.name}</span>
+          {file.isStarred && <Star className="size-4 shrink-0 fill-primary text-primary" />}
         </div>
-        <Button variant="outline" onClick={() => downloadFile(file.id, file.name)}>
+        <Button variant="outline" onClick={() => downloadFile(file.id, file.name)} className="shrink-0">
           <Download className="size-4" />
-          Download
+          <span className="hidden sm:inline">Download</span>
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 flex items-center justify-center rounded-xl border border-border bg-muted/30 p-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="rounded-xl border border-border bg-muted/30 p-4 sm:p-6 lg:col-span-2">
         {file.name.toLowerCase().endsWith('.pdf') ? (
             <PdfPreview fileId={file.id} />
         ) : (
