@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { NewFolderDialog } from '../folders/NewFolderDialog';
 import { ShareDialog } from '../sharing/ShareDialog';
+import { RowActions } from './RowActions';
 import { downloadFile } from '@/lib/downloadFile';
 import { Folder, FileText, Upload, ChevronRight, Trash2, Star, Share2, Download } from 'lucide-react';
 
@@ -92,7 +93,7 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
         ))}
       </nav>
 
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <Button onClick={() => fileInputRef.current?.click()} disabled={uploadFile.isPending}>
           <Upload className="size-4" />
           {uploadFile.isPending ? 'Uploading...' : 'Upload File'}
@@ -146,7 +147,7 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                 </button>
                 {folder.isShared && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Shared</span>}
 
-                <div className="relative flex h-8 shrink-0 items-center">
+                <div className="relative hidden h-8 shrink-0 items-center md:flex">
                   <Star
                     className={`absolute right-1 size-4 fill-primary text-primary transition-opacity duration-150 ${
                       folder.isStarred ? 'opacity-100 group-hover:opacity-0' : 'opacity-0'
@@ -164,6 +165,14 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                     </Button>
                   </div>
                 </div>
+                <div className="shrink-0 md:hidden">
+                  <RowActions
+                    isStarred={folder.isStarred}
+                    onShare={() => setShareTarget({ type: 'folders', id: folder.id, name: folder.name })}
+                    onToggleStar={() => toggleStarFolder.mutate({ id: folder.id, starred: folder.isStarred })}
+                    onDelete={() => deleteFolder.mutate(folder.id)}
+                  />
+                </div>
               </motion.div>
             ))}
             {sortedFiles.map((file) => (
@@ -178,9 +187,9 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                   {file.name}
                 </button>
                 {file.isShared && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Shared</span>}
-                <span className="shrink-0 text-xs text-muted-foreground">{formatSize(file.size)}</span>
+                <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">{formatSize(file.size)}</span>
 
-                <div className="relative flex h-8 shrink-0 items-center">
+                <div className="relative hidden h-8 shrink-0 items-center md:flex">
                   <Star
                     className={`absolute right-1 size-4 fill-primary text-primary transition-opacity duration-150 ${
                       file.isStarred ? 'opacity-100 group-hover:opacity-0' : 'opacity-0'
@@ -200,6 +209,15 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                       <Download className="size-4 text-muted-foreground" />
                     </Button>
                   </div>
+                </div>
+                <div className="shrink-0 md:hidden">
+                  <RowActions
+                    isStarred={file.isStarred}
+                    onShare={() => setShareTarget({ type: 'files', id: file.id, name: file.name })}
+                    onToggleStar={() => toggleStarFile.mutate({ id: file.id, starred: file.isStarred })}
+                    onDelete={() => deleteFile.mutate(file.id)}
+                    onDownload={() => downloadFile(file.id, file.name)}
+                  />
                 </div>
               </motion.div>
             ))}
