@@ -134,7 +134,7 @@ export function PdfPreview({ fileId }: PdfPreviewProps) {
       <div
         className={
           isFullscreen
-            ? `fixed bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border bg-popover px-3 py-2 shadow-lg transition-opacity duration-100 ${
+            ? `fixed bottom-4 left-1/2 z-10 flex -translate-x-1/2 flex-wrap items-center justify-center gap-2 rounded-full border bg-popover px-3 py-2 shadow-lg transition-opacity duration-100 ${
                 hideControls ? 'pointer-events-none opacity-0' : 'opacity-100'
               }`
             : 'flex items-center gap-2'

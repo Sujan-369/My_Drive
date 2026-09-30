@@ -165,6 +165,7 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                     </Button>
                   </div>
                 </div>
+                {folder.isStarred && <Star className="size-4 shrink-0 fill-primary text-primary md:hidden" />}
                 <div className="shrink-0 md:hidden">
                   <RowActions
                     isStarred={folder.isStarred}
@@ -210,6 +211,7 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                     </Button>
                   </div>
                 </div>
+                {file.isStarred && <Star className="size-4 shrink-0 fill-primary text-primary md:hidden" />}
                 <div className="shrink-0 md:hidden">
                   <RowActions
                     isStarred={file.isStarred}
