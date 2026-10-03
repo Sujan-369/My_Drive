@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Configuration;
 using My_Drive.Core.Interfaces;
 
@@ -22,7 +23,11 @@ public sealed class AzureBlobStorageService : IBlobStorageService
     public async Task<string> UploadAsync(Stream content, string blobPath, string contentType)
     {
         var blobClient = _containerClient.GetBlobClient(blobPath);
-        await blobClient.UploadAsync(content, overwrite: true);
+        var options = new BlobUploadOptions
+        {
+            HttpHeaders = new BlobHttpHeaders { ContentType = contentType }
+        };
+        await blobClient.UploadAsync(content, options);
         return blobPath;
     }
 

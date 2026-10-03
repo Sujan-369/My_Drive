@@ -79,7 +79,8 @@ public sealed class FilesController(
         }
 
         var orgId = currentOrganizationProvider.OrganizationId;
-        var blobPath = $"{orgId}/{Guid.NewGuid()}";
+        var extension = Path.GetExtension(request.File.FileName);
+        var blobPath = $"{orgId}/{Guid.NewGuid()}{extension}";
 
         await using var stream = request.File.OpenReadStream();
         using var buffered = new MemoryStream();
