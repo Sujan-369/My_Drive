@@ -48,7 +48,7 @@ export function useMoveFile(fileId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, newFolderId }: { id: string; newFolderId: string | null }) => filesApi.move(id, newFolderId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['files'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['files', fileId] }),
   });
 }
 

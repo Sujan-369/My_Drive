@@ -48,7 +48,7 @@ export function useMoveFolder(parentFolderId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, newParentFolderId }: { id: string; newParentFolderId: string | null }) => foldersApi.move(id, newParentFolderId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['folders'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['folders', parentFolderId] }),
   });
 }
 
