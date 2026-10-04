@@ -40,6 +40,10 @@ public sealed class DriveFile
         {
             throw new ArgumentException("File size cannot be negative.", nameof(size));
         }
+        if (name.Length > 255)
+        {
+            throw new ArgumentException("Name cannot exceed 255 characters.", nameof(name));
+        }
 
         Id = Guid.NewGuid();
         OrganizationId = organizationId;
@@ -76,6 +80,10 @@ public sealed class DriveFile
         if (string.IsNullOrWhiteSpace(newName))
         {
             throw new ArgumentException("File name cannot be empty.", nameof(newName));
+        }
+        if (newName.Length > 255)
+        {
+            throw new ArgumentException("Name cannot exceed 255 characters.", nameof(newName));
         }
 
         Name = newName;

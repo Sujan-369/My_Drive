@@ -128,4 +128,18 @@ public class DriveFileTests
 
         Assert.False(file.IsStarred);
     }
+
+    [Fact]
+    public void Constructor_WithNameExceedingMaxLength_Throws()
+    {
+        var tooLongName = new string('a', 256);
+        Assert.Throws<ArgumentException>(() => new DriveFile(OrgId, OwnerId, tooLongName, null, "blobs/v1", 1024, "hash1"));
+    }
+
+    [Fact]
+    public void Rename_WithNameExceedingMaxLength_Throws()
+    {
+        var file = new DriveFile(OrgId, OwnerId, "report.pdf", null, "blobs/v1", 1024, "hash1");
+        Assert.Throws<ArgumentException>(() => file.Rename(new string('a', 256)));
+    }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useStorageUsage } from '../organization/useOrganization';
 import { useRecentFiles, useUploadFile } from '../files/useFiles';
 import { useRecentActivity } from '../activity/useActivity';
@@ -36,6 +36,7 @@ export function HomeScreen({ onOpenPreview }: HomeScreenProps) {
   const { data: activity } = useRecentActivity(8);
   const uploadFile = useUploadFile(null);
   const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -64,9 +65,11 @@ export function HomeScreen({ onOpenPreview }: HomeScreenProps) {
           }`}
         >
           <UploadCloud className="mb-1 size-5 text-primary" />
-          <div className="text-sm font-medium">
-            {uploadFile.isPending ? 'Uploading...' : 'Drag and drop files to upload'}
-          </div>
+          <div className="text-sm font-medium">{uploadFile.isPending ? 'Uploading...' : 'Drag and drop files to upload'}</div>
+          <button onClick={() => fileInputRef.current?.click()} className="mt-1 text-xs text-primary hover:underline">
+            or click to browse
+          </button>
+          <input ref={fileInputRef} type="file" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile.mutate(f); e.target.value = ''; }} className="hidden" />
         </div>
       </div>
 
@@ -80,7 +83,7 @@ export function HomeScreen({ onOpenPreview }: HomeScreenProps) {
             <button
               key={file.id}
               onClick={() => onOpenPreview(file.id)}
-              className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.03] ${
+              className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/3 ${
                 i > 0 ? 'border-t border-border' : ''
               }`}
             >
