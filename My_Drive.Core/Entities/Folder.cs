@@ -29,6 +29,10 @@ public sealed class Folder
         {
             throw new ArgumentException("Folder name cannot be empty.", nameof(name));
         }
+        if (name.Length > 255)
+        {
+            throw new ArgumentException("Name cannot exceed 255 characters.", nameof(name));
+        }
 
         Id = Guid.NewGuid();
         OrganizationId = organizationId;
@@ -44,6 +48,10 @@ public sealed class Folder
         if (string.IsNullOrWhiteSpace(newName))
         {
             throw new ArgumentException("Folder name cannot be empty.", nameof(newName));
+        }
+        if (newName.Length > 255)
+        {
+            throw new ArgumentException("Name cannot exceed 255 characters.", nameof(newName));
         }
 
         Name = newName;

@@ -122,4 +122,18 @@ public class FolderTests
 
         Assert.False(folder.IsStarred);
     }
+
+    [Fact]
+    public void Constructor_WithNameExceedingMaxLength_Throws()
+    {
+        var tooLongName = new string('a', 256);
+        Assert.Throws<ArgumentException>(() => new Folder(OrgId, OwnerId, tooLongName));
+    }
+
+    [Fact]
+    public void Rename_WithNameExceedingMaxLength_Throws()
+    {
+        var folder = new Folder(OrgId, OwnerId, "Documents");
+        Assert.Throws<ArgumentException>(() => folder.Rename(new string('a', 256)));
+    }
 }
