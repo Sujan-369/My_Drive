@@ -8,6 +8,7 @@ public sealed class User
     public string DisplayName { get; private set; } = null!;
     public string GoogleSubjectId { get; private set; } = null!;
     public string? PictureUrl { get; private set; }
+    public DateTime? LastRecentClearedAt { get; private set; }
 
     private User() { }
 
@@ -51,4 +52,6 @@ public sealed class User
         DisplayName = displayName;
         PictureUrl = pictureUrl;
     }
+
+    public void ClearRecentHistory() => LastRecentClearedAt = DateTime.UtcNow;
 }

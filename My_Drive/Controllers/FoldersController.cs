@@ -10,6 +10,8 @@ namespace My_Drive.Controllers;
 [Route("api/folders")]
 public sealed class FoldersController(
     IFolderRepository folderRepository,
+    IFileRepository fileRepository,
+    IBlobStorageService blobStorageService,
     ICurrentOrganizationProvider currentOrganizationProvider,
     ICurrentUserProvider currentUserProvider,
     IActivityLogger activityLogger,
@@ -180,7 +182,23 @@ public sealed class FoldersController(
         if (folder is null)
             return NotFound();
 
-        await folderRepository.DeletePermanentAsync(folder);
+        var foldersToDelete = await folderRepository.GetDescendantsAsync(id);
+        var folderIds = foldersToDelete.Select(f => f.Id).ToList();
+        var filesToDelete = await fileRepository.GetByFolderIdsAsync(folderIds);
+
+        foreach (var file in filesToDelete)
+        {
+            foreach (var version in file.Versions)
+            {
+                await blobStorageService.DeleteAsync(version.BlobPath);
+            }
+        }
+
+        fileRepository.DeleteRange(filesToDelete);
+        folderRepository.DeleteRange(foldersToDelete.AsEnumerable().Reverse());
+
+        await folderRepository.SaveChangesAsync();
+
         return NoContent();
     }
 

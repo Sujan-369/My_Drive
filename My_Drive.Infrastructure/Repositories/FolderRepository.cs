@@ -72,6 +72,33 @@ public sealed class FolderRepository(
         await dbContext.SaveChangesAsync();
     }
 
+    public async Task<IReadOnlyList<Folder>> GetDescendantsAsync(Guid rootId)
+    {
+        var orgId = currentOrganizationProvider.OrganizationId;
+        var all = await dbContext
+            .Folders.IgnoreQueryFilters()
+            .Where(f => f.OrganizationId == orgId)
+            .ToListAsync();
+
+        var result = new List<Folder>();
+        var root = all.FirstOrDefault(f => f.Id == rootId);
+        if (root is null)
+            return result;
+
+        var queue = new Queue<Folder>();
+        queue.Enqueue(root);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            result.Add(current);
+            foreach (var child in all.Where(f => f.ParentFolderId == current.Id))
+                queue.Enqueue(child);
+        }
+        return result;
+    }
+
+    public void DeleteRange(IEnumerable<Folder> folders) => dbContext.Folders.RemoveRange(folders);
+
     public async Task<IReadOnlyList<Folder>> GetStarredAsync() =>
         await dbContext.Folders.Where(f => f.IsStarred).OrderBy(f => f.Name).ToListAsync();
 

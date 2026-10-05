@@ -19,6 +19,7 @@ public sealed class DriveFile
     public bool IsDeleted { get; private set; }
     public DateTime? DeletedAt { get; private set; }
     public bool IsStarred { get; private set; }
+    public DateTime? LastAccessedAt { get; private set; }
 
     public IReadOnlyList<FileVersion> Versions => _versions;
 
@@ -148,4 +149,6 @@ public sealed class DriveFile
     public void Star() => IsStarred = true;
 
     public void Unstar() => IsStarred = false;
+
+    public void MarkAccessed() => LastAccessedAt = DateTime.UtcNow;
 }

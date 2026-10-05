@@ -11,6 +11,8 @@ public interface IFolderRepository
     Task<IReadOnlyList<Folder>> GetDeletedAsync();
     Task<Folder?> GetDeletedByIdAsync(Guid id);
     Task DeletePermanentAsync(Folder folder);
+    Task<IReadOnlyList<Folder>> GetDescendantsAsync(Guid rootId);
+    void DeleteRange(IEnumerable<Folder> folders);
     Task<IReadOnlyList<Folder>> GetStarredAsync();
     Task<IReadOnlyList<Folder>> SearchAsync(string term);
 }

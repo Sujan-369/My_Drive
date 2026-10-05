@@ -65,6 +65,10 @@ export function usePermanentDeleteFolder() {
   return useMutation({
     mutationFn: (id: string) => foldersApi.deletePermanent(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['folders', 'trash'] }),
+    onError: (error) => {
+      console.error('Permanent delete failed:', error);
+      alert('Could not permanently delete. Please try again.');
+    },
   });
 }
 

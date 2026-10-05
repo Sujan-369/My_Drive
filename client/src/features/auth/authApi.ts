@@ -34,5 +34,7 @@ export const authApi = {
     return response.json();
   },
 
+  clearRecentHistory: () => apiClient.post<void>('/api/auth/me/clear-recent'),
+
   getMe: () => apiClient.get<CurrentUserResponse>('/api/auth/me'),
 };

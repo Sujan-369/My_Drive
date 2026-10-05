@@ -61,8 +61,9 @@ public sealed class FilesController(
         [FromQuery] int take = 10
     )
     {
-        var files = await fileRepository.GetRecentAsync(take);
-        return Ok(files.Select(f => ToResponse(f, false)));
+        var user = await userRepository.GetByIdAsync(currentUserProvider.UserId);
+        var files = await fileRepository.GetRecentAsync(take, user?.LastRecentClearedAt);
+        return Ok(files.Select(f => ToResponse(f)));
     }
 
     [HttpPost]
@@ -127,6 +128,9 @@ public sealed class FilesController(
         {
             contentType = "application/octet-stream";
         }
+
+        file.MarkAccessed();
+        await fileRepository.SaveChangesAsync();
 
         return File(content, contentType, file.Name);
     }
@@ -348,6 +352,9 @@ public sealed class FilesController(
             .Versions.OrderByDescending(v => v.CreatedAt)
             .Select(v => new FileVersionResponse(v.Id, v.Size, v.CreatedAt))
             .ToList();
+
+        file.MarkAccessed();
+        await fileRepository.SaveChangesAsync();
 
         return Ok(
             new FileDetailResponse(
