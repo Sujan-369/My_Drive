@@ -51,7 +51,7 @@ export function TrashScreen() {
             {folders?.map((folder) => (
               <div key={folder.id} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/3">
                 <Folder className="size-5 shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate">{folder.name}</span>
+                <span className="min-w-0 flex-1 truncate">{folder.name}</span>
                 <Button variant="ghost" size="icon" onClick={() => restoreFolder.mutate(folder.id)} title="Restore">
                   <RotateCcw className="size-4" />
                 </Button>
@@ -63,7 +63,7 @@ export function TrashScreen() {
             {files?.map((file) => (
               <div key={file.id} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/3">
                 <FileText className="size-5 shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate">{file.name}</span>
+                <span className="min-w-0 flex-1 truncate">{file.name}</span>
                 <Button variant="ghost" size="icon" onClick={() => restoreFile.mutate(file.id)} title="Restore">
                   <RotateCcw className="size-4" />
                 </Button>
@@ -84,7 +84,7 @@ export function TrashScreen() {
               Delete item permanently?
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
+          <p className="break-all text-sm text-muted-foreground">
             Permanently delete <span className="font-medium text-foreground">{pending?.name}</span>? This action cannot be undone.
           </p>
           <DialogFooter>

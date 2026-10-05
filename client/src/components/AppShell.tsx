@@ -24,8 +24,8 @@ export function AppShell({
   children,
 }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-muted/20">
-      <header className="border-b bg-background">
+    <div className="flex h-screen flex-col overflow-hidden bg-muted/20">
+      <header className="shrink-0 border-b bg-background">
         <div className="mx-auto flex max-w-screen-2xl items-center justify-between gap-3 px-4 py-3 md:gap-4 md:px-8">
           <div className="flex shrink-0 items-center gap-2">
             <button onClick={onToggleMobileMenu} className="flex size-8 items-center justify-center rounded-md hover:bg-white/5 md:hidden">
@@ -39,12 +39,7 @@ export function AppShell({
 
           <div className="relative max-w-sm flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchValue}
-              onChange={(e) => onSearch(e.target.value)}
-              placeholder="Search files and folders..."
-              className="pl-9"
-            />
+            <Input value={searchValue} onChange={(e) => onSearch(e.target.value)} placeholder="Search files and folders..." className="pl-9" />
           </div>
 
           <button
@@ -66,7 +61,8 @@ export function AppShell({
           </button>
         </div>
       </header>
-      <main className="mx-auto max-w-screen-2xl px-4 py-6 md:px-8 md:py-8">{children}</main>
+
+      <div className="mx-auto flex w-full max-w-screen-2xl flex-1 overflow-hidden px-4 md:px-8">{children}</div>
     </div>
   );
 }

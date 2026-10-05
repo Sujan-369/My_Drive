@@ -31,7 +31,15 @@ public class DriveFileTests
     public void Constructor_WithFolderId_SetsFolderId()
     {
         var folderId = Guid.NewGuid();
-        var file = new DriveFile(OrgId, OwnerId, "report.pdf", folderId, "blobs/abc123", 1024, "hash1");
+        var file = new DriveFile(
+            OrgId,
+            OwnerId,
+            "report.pdf",
+            folderId,
+            "blobs/abc123",
+            1024,
+            "hash1"
+        );
         Assert.Equal(folderId, file.FolderId);
     }
 
@@ -42,14 +50,16 @@ public class DriveFileTests
     public void Constructor_WithEmptyName_Throws(string? invalidName)
     {
         Assert.Throws<ArgumentException>(() =>
-            new DriveFile(OrgId, OwnerId, invalidName!, null, "blobs/abc123", 1024, "hash1"));
+            new DriveFile(OrgId, OwnerId, invalidName!, null, "blobs/abc123", 1024, "hash1")
+        );
     }
 
     [Fact]
     public void Constructor_WithNegativeSize_Throws()
     {
         Assert.Throws<ArgumentException>(() =>
-            new DriveFile(OrgId, OwnerId, "report.pdf", null, "blobs/abc123", -1, "hash1"));
+            new DriveFile(OrgId, OwnerId, "report.pdf", null, "blobs/abc123", -1, "hash1")
+        );
     }
 
     [Fact]
@@ -133,7 +143,9 @@ public class DriveFileTests
     public void Constructor_WithNameExceedingMaxLength_Throws()
     {
         var tooLongName = new string('a', 256);
-        Assert.Throws<ArgumentException>(() => new DriveFile(OrgId, OwnerId, tooLongName, null, "blobs/v1", 1024, "hash1"));
+        Assert.Throws<ArgumentException>(() =>
+            new DriveFile(OrgId, OwnerId, tooLongName, null, "blobs/v1", 1024, "hash1")
+        );
     }
 
     [Fact]
@@ -141,5 +153,31 @@ public class DriveFileTests
     {
         var file = new DriveFile(OrgId, OwnerId, "report.pdf", null, "blobs/v1", 1024, "hash1");
         Assert.Throws<ArgumentException>(() => file.Rename(new string('a', 256)));
+    }
+
+    [Fact]
+    public void Rename_ChangingExtension_Throws()
+    {
+        var file = new DriveFile(OrgId, OwnerId, "report.pdf", null, "blobs/v1", 1024, "hash1");
+        Assert.Throws<ArgumentException>(() => file.Rename("report.docx"));
+    }
+
+    [Fact]
+    public void Rename_KeepingSameExtension_Succeeds()
+    {
+        var file = new DriveFile(OrgId, OwnerId, "report.pdf", null, "blobs/v1", 1024, "hash1");
+        file.Rename("final-report.pdf");
+        Assert.Equal("final-report.pdf", file.Name);
+    }
+
+    [Theory]
+    [InlineData("report/pdf")]
+    [InlineData("report:pdf")]
+    [InlineData("report*pdf")]
+    public void Constructor_WithInvalidCharacters_Throws(string invalidName)
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new DriveFile(OrgId, OwnerId, invalidName, null, "blobs/v1", 1024, "hash1")
+        );
     }
 }

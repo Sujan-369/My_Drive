@@ -25,7 +25,7 @@ export function StarredScreen() {
             {folders?.map((folder) => (
               <div key={folder.id} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/3">
                 <Folder className="size-5 shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate">{folder.name}</span>
+                <span className="min-w-0 flex-1 truncate">{folder.name}</span>
                 <Button variant="ghost" size="icon" onClick={() => toggleFolder.mutate({ id: folder.id, starred: true })}>
                   <Star className="size-4 fill-primary text-primary" />
                 </Button>
@@ -34,7 +34,7 @@ export function StarredScreen() {
             {files?.map((file) => (
               <div key={file.id} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/3">
                 <FileText className="size-5 shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate">{file.name}</span>
+                <span className="min-w-0 flex-1 truncate">{file.name}</span>
                 <Button variant="ghost" size="icon" onClick={() => toggleFile.mutate({ id: file.id, starred: true })}>
                   <Star className="size-4 fill-primary text-primary" />
                 </Button>

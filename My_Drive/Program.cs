@@ -13,6 +13,7 @@ using My_Drive.Infrastructure.Data;
 using My_Drive.Infrastructure.Repositories;
 using My_Drive.Infrastructure.Services;
 using My_Drive.Infrastructure.Storage;
+using My_Drive.Middleware;
 using Scalar.AspNetCore;
 
 namespace My_Drive
@@ -98,6 +99,8 @@ namespace My_Drive
             builder.Services.AddHostedService<TrashPurgeService>();
 
             var app = builder.Build();
+
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
 
             app.UseCors("AllowReactClient");
 
