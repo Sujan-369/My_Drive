@@ -1,4 +1,6 @@
-﻿namespace My_Drive.Core.Entities;
+﻿using System.Xml.Linq;
+
+namespace My_Drive.Core.Entities;
 
 public sealed class DriveFile
 {
@@ -22,11 +24,22 @@ public sealed class DriveFile
 
     private DriveFile() { }
 
-    public DriveFile(Guid organizationId, Guid ownerId, string name, Guid? folderId, string blobPath, long size, string contentHash)
+    public DriveFile(
+        Guid organizationId,
+        Guid ownerId,
+        string name,
+        Guid? folderId,
+        string blobPath,
+        long size,
+        string contentHash
+    )
     {
         if (organizationId == Guid.Empty)
         {
-            throw new ArgumentException("File must belong to a valid Organization.", nameof(organizationId));
+            throw new ArgumentException(
+                "File must belong to a valid Organization.",
+                nameof(organizationId)
+            );
         }
         if (ownerId == Guid.Empty)
         {
@@ -36,13 +49,20 @@ public sealed class DriveFile
         {
             throw new ArgumentException("File name cannot be empty.", nameof(name));
         }
-        if (size < 0)
-        {
-            throw new ArgumentException("File size cannot be negative.", nameof(size));
-        }
         if (name.Length > 255)
         {
             throw new ArgumentException("Name cannot exceed 255 characters.", nameof(name));
+        }
+        if (name.IndexOfAny(['/', '\\', ':', '*', '?', '"', '<', '>', '|']) >= 0)
+        {
+            throw new ArgumentException(
+                "Name contains characters that aren't allowed: / \\ : * ? \" < > |",
+                nameof(name)
+            );
+        }
+        if (size < 0)
+        {
+            throw new ArgumentException("File size cannot be negative.", nameof(size));
         }
 
         Id = Guid.NewGuid();
@@ -84,6 +104,23 @@ public sealed class DriveFile
         if (newName.Length > 255)
         {
             throw new ArgumentException("Name cannot exceed 255 characters.", nameof(newName));
+        }
+        if (newName.IndexOfAny(['/', '\\', ':', '*', '?', '"', '<', '>', '|']) >= 0)
+        {
+            throw new ArgumentException(
+                "Name contains characters that aren't allowed: / \\ : * ? \" < > |",
+                nameof(newName)
+            );
+        }
+
+        var currentExtension = Path.GetExtension(Name);
+        var newExtension = Path.GetExtension(newName);
+        if (!string.Equals(currentExtension, newExtension, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException(
+                "A file's type can't be changed when renaming.",
+                nameof(newName)
+            );
         }
 
         Name = newName;

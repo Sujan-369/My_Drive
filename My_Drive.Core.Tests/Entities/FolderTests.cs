@@ -37,6 +37,14 @@ public class FolderTests
         Assert.Throws<ArgumentException>(() => new Folder(OrgId, OwnerId, invalidName!));
     }
 
+    [Theory]
+    [InlineData("My/Folder")]
+    [InlineData("My:Folder")]
+    public void Constructor_WithInvalidCharacters_Throws(string invalidName)
+    {
+        Assert.Throws<ArgumentException>(() => new Folder(OrgId, OwnerId, invalidName));
+    }
+
     [Fact]
     public void Constructor_WithEmptyOrganizationId_Throws()
     {

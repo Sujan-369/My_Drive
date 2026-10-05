@@ -79,11 +79,11 @@ export function RecentScreen({ onOpenPreview }: RecentScreenProps) {
                   <FileText className="size-4 shrink-0 text-muted-foreground" />
                 )}
                 {entry.resourceType === 'File' ? (
-                  <button onClick={() => onOpenPreview(entry.resourceId)} className="flex-1 truncate text-left text-sm hover:underline">
+                  <button onClick={() => onOpenPreview(entry.resourceId)} className="min-w-0 flex-1 truncate text-left text-sm hover:underline">
                     {entry.resourceName}
                   </button>
                 ) : (
-                  <span className="flex-1 truncate text-sm">{entry.resourceName}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm">{entry.resourceName}</span>
                 )}
                 <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                   {actionLabels[entry.action] ?? entry.action}

@@ -87,9 +87,9 @@ function App() {
     setPreviewFileId(fileId);
   };
 
-  const renderView = () => {
+  const renderView = (auth: AuthResponse) => {
     if (view === 'search') return <SearchScreen query={searchQuery} onOpenPreview={handleOpenPreview} />;
-    if (view === 'home') return <HomeScreen onOpenPreview={handleOpenPreview} />;
+    if (view === 'home') return <HomeScreen auth={auth} onOpenPreview={handleOpenPreview} />;
     if (view === 'trash') return <TrashScreen />;
     if (view === 'starred') return <StarredScreen />;
     if (view === 'recent') return <RecentScreen onOpenPreview={handleOpenPreview} />;
@@ -118,20 +118,15 @@ function App() {
               onOpenSettings={handleOpenSettings}
               onToggleMobileMenu={() => setIsMobileMenuOpen((o) => !o)}
             >
-              <div className="flex gap-6">
-                <Sidebar
-                  activeView={view}
-                  onNavigate={handleNavigate}
-                  isMobileOpen={isMobileMenuOpen}
-                  onMobileClose={() => setIsMobileMenuOpen(false)}
-                />
-                <div className="min-w-0 flex-1">
+              <div className="flex flex-1 gap-6 overflow-hidden">
+                <Sidebar activeView={view} onNavigate={handleNavigate} isMobileOpen={isMobileMenuOpen} onMobileClose={() => setIsMobileMenuOpen(false)} />
+                <div className="min-w-0 flex-1 overflow-y-auto py-6 md:py-8">
                   {showSettings ? (
                     <SettingsScreen auth={auth} onBack={() => setShowSettings(false)} onSignOut={handleSignOut} />
                   ) : previewFileId ? (
                     <PreviewScreen fileId={previewFileId} onBack={() => setPreviewFileId(null)} />
                   ) : (
-                    renderView()
+                    renderView(auth)
                   )}
                 </div>
               </div>

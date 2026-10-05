@@ -92,11 +92,11 @@ export function SearchScreen({ query, onOpenPreview }: SearchScreenProps) {
                   <FileText className="size-4 shrink-0 text-muted-foreground" />
                 )}
                 {result.type === 'File' ? (
-                  <button onClick={() => onOpenPreview(result.id)} className="flex-1 truncate text-left text-sm hover:underline">
+                  <button onClick={() => onOpenPreview(result.id)} className="min-w-0 flex-1 truncate text-left text-sm hover:underline">
                     {highlightMatch(result.name, query)}
                   </button>
                 ) : (
-                  <span className="flex-1 truncate text-sm">{highlightMatch(result.name, query)}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm">{highlightMatch(result.name, query)}</span>
                 )}
                 <span className="shrink-0 text-xs text-muted-foreground">{formatSize(result.size)}</span>
               </div>

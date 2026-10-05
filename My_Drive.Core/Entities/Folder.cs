@@ -1,4 +1,6 @@
-﻿namespace My_Drive.Core.Entities;
+﻿using System.Xml.Linq;
+
+namespace My_Drive.Core.Entities;
 
 public sealed class Folder
 {
@@ -19,7 +21,10 @@ public sealed class Folder
     {
         if (organizationId == Guid.Empty)
         {
-            throw new ArgumentException("Folder must belong to a valid Organization.", nameof(organizationId));
+            throw new ArgumentException(
+                "Folder must belong to a valid Organization.",
+                nameof(organizationId)
+            );
         }
         if (ownerId == Guid.Empty)
         {
@@ -32,6 +37,13 @@ public sealed class Folder
         if (name.Length > 255)
         {
             throw new ArgumentException("Name cannot exceed 255 characters.", nameof(name));
+        }
+        if (name.IndexOfAny(['/', '\\', ':', '*', '?', '"', '<', '>', '|']) >= 0)
+        {
+            throw new ArgumentException(
+                "Name contains characters that aren't allowed: / \\ : * ? \" < > |",
+                nameof(name)
+            );
         }
 
         Id = Guid.NewGuid();
@@ -52,6 +64,13 @@ public sealed class Folder
         if (newName.Length > 255)
         {
             throw new ArgumentException("Name cannot exceed 255 characters.", nameof(newName));
+        }
+        if (newName.IndexOfAny(['/', '\\', ':', '*', '?', '"', '<', '>', '|']) >= 0)
+        {
+            throw new ArgumentException(
+                "Name contains characters that aren't allowed: / \\ : * ? \" < > |",
+                nameof(newName)
+            );
         }
 
         Name = newName;

@@ -24,8 +24,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
 
   if (!response.ok) {
-    const body = await response.text();
-    throw new ApiError(response.status, body || `Request failed: ${response.status}`);
+    let message = `Request failed: ${response.status}`;
+    try {
+      const body = await response.json();
+      if (body?.message) message = body.message;
+    } catch {
+      // Response wasn't JSON — keep the generic message.
+    }
+    throw new ApiError(response.status, message);
   }
 
   if (response.status === 204) {

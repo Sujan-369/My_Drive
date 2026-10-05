@@ -1,3 +1,4 @@
+import type { AuthResponse } from '../auth/authApi';
 import { useRef, useState } from 'react';
 import { useStorageUsage } from '../organization/useOrganization';
 import { useRecentFiles, useUploadFile } from '../files/useFiles';
@@ -5,6 +6,7 @@ import { useRecentActivity } from '../activity/useActivity';
 import { FileText, UploadCloud } from 'lucide-react';
 
 interface HomeScreenProps {
+  auth: AuthResponse;
   onOpenPreview: (fileId: string) => void;
 }
 
@@ -30,7 +32,8 @@ const actionLabels: Record<string, string> = {
   Deleted: 'deleted', Restored: 'restored', Shared: 'shared',
 };
 
-export function HomeScreen({ onOpenPreview }: HomeScreenProps) {
+export function HomeScreen({ auth, onOpenPreview }: HomeScreenProps) {
+  const firstName = auth.displayName?.split(' ')[0] || 'there';
   const { data: usage } = useStorageUsage();
   const { data: recentFiles } = useRecentFiles(5);
   const { data: activity } = useRecentActivity(8);
@@ -47,7 +50,7 @@ export function HomeScreen({ onOpenPreview }: HomeScreenProps) {
 
   return (
     <div>
-      <h1 className="mb-1 text-xl font-semibold">Welcome back</h1>
+      <h1 className="mb-1 text-xl font-semibold">Welcome back, {firstName}</h1>
       <p className="mb-6 text-sm text-muted-foreground">Here's an overview of your workspace today.</p>
 
       <div className="mb-8 grid grid-cols-2 gap-4">
@@ -60,16 +63,23 @@ export function HomeScreen({ onOpenPreview }: HomeScreenProps) {
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
-          className={`flex flex-col items-center justify-center rounded-xl border border-dashed p-5 text-center transition-colors ${
-            isDragging ? 'border-primary bg-primary/5' : 'border-border'
+          onClick={() => fileInputRef.current?.click()}
+          role="button"
+          tabIndex={0}
+          className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed p-5 text-center transition-colors ${
+            isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-white/2'
           }`}
         >
           <UploadCloud className="mb-1 size-5 text-primary" />
-          <div className="text-sm font-medium">{uploadFile.isPending ? 'Uploading...' : 'Drag and drop files to upload'}</div>
-          <button onClick={() => fileInputRef.current?.click()} className="mt-1 text-xs text-primary hover:underline">
-            or click to browse
-          </button>
-          <input ref={fileInputRef} type="file" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile.mutate(f); e.target.value = ''; }} className="hidden" />
+          <div className="text-sm font-medium">
+            {uploadFile.isPending ? 'Uploading...' : 'Drag and drop files, or click to browse'}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile.mutate(f); e.target.value = ''; }}
+            className="hidden"
+          />
         </div>
       </div>
 
@@ -83,7 +93,7 @@ export function HomeScreen({ onOpenPreview }: HomeScreenProps) {
             <button
               key={file.id}
               onClick={() => onOpenPreview(file.id)}
-              className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/3 ${
+              className={`flex min-w-0 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/3 ${
                 i > 0 ? 'border-t border-border' : ''
               }`}
             >
@@ -107,7 +117,7 @@ export function HomeScreen({ onOpenPreview }: HomeScreenProps) {
               className={`flex items-center gap-2 px-4 py-3 text-sm ${i > 0 ? 'border-t border-border' : ''}`}
             >
               <span className="text-muted-foreground">You {actionLabels[entry.action] ?? entry.action.toLowerCase()}</span>
-              <span className="truncate font-medium">{entry.resourceName}</span>
+              <span className=" min-w-0 truncate font-medium">{entry.resourceName}</span>
               <span className="ml-auto shrink-0 text-xs text-muted-foreground">{formatRelativeTime(entry.createdAt)}</span>
             </div>
           ))}

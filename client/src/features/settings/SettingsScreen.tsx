@@ -11,14 +11,14 @@ interface SettingsScreenProps {
 export function SettingsScreen({ auth, onBack, onSignOut }: SettingsScreenProps) {
   return (
     <div>
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mx-auto mb-6 flex w-full max-w-2xl items-center gap-2">
         <Button variant="ghost" size="icon" onClick={onBack}>
           <ArrowLeft className="size-4" />
         </Button>
         <span className="font-medium">Settings</span>
       </div>
 
-      <div className="max-w-2xl space-y-4">
+      <div className="mx-auto w-full max-w-2xl space-y-6">
         <div className="rounded-lg border p-6">
           <h3 className="mb-4 text-sm font-semibold text-foreground">Profile</h3>
           <div className="mb-4 flex items-center gap-3">

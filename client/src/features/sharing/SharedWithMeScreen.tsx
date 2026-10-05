@@ -29,7 +29,7 @@ export function SharedWithMeScreen() {
                 ) : (
                   <FileText className="size-4 shrink-0 text-muted-foreground" />
                 )}
-                <span className="flex-1 truncate text-sm">{share.resourceName}</span>
+                <span className="min-w-0 flex-1 truncate text-sm">{share.resourceName}</span>
                 <div className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
                   {share.sharedByPictureUrl ? (
                     <img src={share.sharedByPictureUrl} alt={share.sharedByName} className="size-5 rounded-full" referrerPolicy="no-referrer" />
