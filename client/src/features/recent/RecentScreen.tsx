@@ -1,6 +1,7 @@
 import { useRecentActivity } from '../activity/useActivity';
 import type { ActivityLogResponse } from '../activity/activityApi';
 import { FileText, Folder } from 'lucide-react';
+import { ClearRecentButton } from '../activity/ClearRecentButton';
 
 const actionLabels: Record<string, string> = {
   Created: 'Created',
@@ -63,6 +64,10 @@ export function RecentScreen({ onOpenPreview }: RecentScreenProps) {
 
   return (
     <div>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Recent Activity</h1>
+        <ClearRecentButton />
+      </div>
       {isLoading && <p className="text-sm text-muted-foreground">Loading...</p>}
       {!isLoading && groups.length === 0 && (
         <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">No recent activity.</p>
@@ -79,7 +84,7 @@ export function RecentScreen({ onOpenPreview }: RecentScreenProps) {
                   <FileText className="size-4 shrink-0 text-muted-foreground" />
                 )}
                 {entry.resourceType === 'File' ? (
-                  <button onClick={() => onOpenPreview(entry.resourceId)} className="min-w-0 flex-1 truncate text-left text-sm hover:underline">
+                  <button onClick={() => onOpenPreview(entry.resourceId)} className="min-w-0 flex-1 truncate text-left text-sm">
                     {entry.resourceName}
                   </button>
                 ) : (

@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useFileDetail, useFileShares } from './usePreview';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Star, FileText } from 'lucide-react';
@@ -22,6 +24,11 @@ function formatDate(iso: string): string {
 export function PreviewScreen({ fileId, onBack }: PreviewScreenProps) {
   const { data: file, isLoading } = useFileDetail(fileId);
   const { data: shares } = useFileShares(fileId);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['files', 'recent'] });
+  }, [fileId, queryClient]);
 
   if (isLoading || !file) return <p className="text-sm text-muted-foreground">Loading...</p>;
 

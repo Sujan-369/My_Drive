@@ -5,5 +5,5 @@ namespace My_Drive.Core.Interfaces;
 public interface IActivityLogRepository
 {
     Task AddAsync(ActivityLog log);
-    Task<IReadOnlyList<ActivityLog>> GetRecentAsync(int take);
+    Task<IReadOnlyList<ActivityLog>> GetRecentAsync(int take, DateTime? after);
 }

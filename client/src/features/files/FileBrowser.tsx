@@ -235,7 +235,7 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                 >
                   <span className="absolute inset-y-0 left-0 w-0.5 bg-primary opacity-0 transition-opacity group-hover:opacity-100" />
                   <FileText className="size-5 shrink-0 text-muted-foreground" />
-                  <button onClick={() => onOpenPreview(file.id)} className={`min-w-0 flex-1 truncate text-left text-sm hover:underline ${draggableId === file.id ? 'cursor-grab active:cursor-grabbing' : ''}`}>{file.name}</button>
+                  <button onClick={() => onOpenPreview(file.id)} className={`min-w-0 flex-1 truncate text-left text-sm ${draggableId === file.id ? 'cursor-grab active:cursor-grabbing' : ''}`}>{file.name}</button>
                   {file.isShared && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Shared</span>}
                   <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">{formatSize(file.size)}</span>
                   <Button variant="ghost" size="icon" onClick={() => toggleStarFile.mutate({ id: file.id, starred: file.isStarred })}>

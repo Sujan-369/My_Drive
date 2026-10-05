@@ -52,4 +52,16 @@ public sealed class AuthController(
             )
         );
     }
+
+    [HttpPost("me/clear-recent")]
+    public async Task<IActionResult> ClearRecentHistory()
+    {
+        var user = await userRepository.GetByIdAsync(currentUserProvider.UserId);
+        if (user is null)
+            return NotFound();
+
+        user.ClearRecentHistory();
+        await userRepository.SaveChangesAsync();
+        return NoContent();
+    }
 }

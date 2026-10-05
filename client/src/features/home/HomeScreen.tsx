@@ -2,8 +2,8 @@ import type { AuthResponse } from '../auth/authApi';
 import { useRef, useState } from 'react';
 import { useStorageUsage } from '../organization/useOrganization';
 import { useRecentFiles, useUploadFile } from '../files/useFiles';
-import { useRecentActivity } from '../activity/useActivity';
 import { FileText, UploadCloud } from 'lucide-react';
+import {ClearRecentButton } from '../activity/ClearRecentButton';
 
 interface HomeScreenProps {
   auth: AuthResponse;
@@ -27,16 +27,10 @@ function formatRelativeTime(iso: string): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-const actionLabels: Record<string, string> = {
-  Created: 'created', Uploaded: 'uploaded', Renamed: 'renamed', Moved: 'moved',
-  Deleted: 'deleted', Restored: 'restored', Shared: 'shared',
-};
-
 export function HomeScreen({ auth, onOpenPreview }: HomeScreenProps) {
   const firstName = auth.displayName?.split(' ')[0] || 'there';
   const { data: usage } = useStorageUsage();
   const { data: recentFiles } = useRecentFiles(5);
-  const { data: activity } = useRecentActivity(8);
   const uploadFile = useUploadFile(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,7 +78,10 @@ export function HomeScreen({ auth, onOpenPreview }: HomeScreenProps) {
       </div>
 
       <div className="mb-8">
-        <h2 className="mb-2 text-sm font-semibold text-foreground">Recent Files</h2>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">Recent Files</h2>
+          <ClearRecentButton />
+        </div>
         <div className="overflow-hidden rounded-xl border border-border">
           {(recentFiles?.length ?? 0) === 0 && (
             <p className="px-4 py-8 text-center text-sm text-muted-foreground">No files yet.</p>
@@ -101,25 +98,6 @@ export function HomeScreen({ auth, onOpenPreview }: HomeScreenProps) {
               <span className="flex-1 truncate text-sm">{file.name}</span>
               <span className="shrink-0 text-xs text-muted-foreground">{formatRelativeTime(file.modifiedAt)}</span>
             </button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h2 className="mb-2 text-sm font-semibold text-foreground">Recent Activity</h2>
-        <div className="overflow-hidden rounded-xl border border-border">
-          {(activity?.length ?? 0) === 0 && (
-            <p className="px-4 py-8 text-center text-sm text-muted-foreground">No activity yet.</p>
-          )}
-          {activity?.map((entry, i) => (
-            <div
-              key={entry.id}
-              className={`flex items-center gap-2 px-4 py-3 text-sm ${i > 0 ? 'border-t border-border' : ''}`}
-            >
-              <span className="text-muted-foreground">You {actionLabels[entry.action] ?? entry.action.toLowerCase()}</span>
-              <span className=" min-w-0 truncate font-medium">{entry.resourceName}</span>
-              <span className="ml-auto shrink-0 text-xs text-muted-foreground">{formatRelativeTime(entry.createdAt)}</span>
-            </div>
           ))}
         </div>
       </div>

@@ -71,6 +71,19 @@ public sealed class FileRepository(
         await dbContext.SaveChangesAsync();
     }
 
+    public async Task<IReadOnlyList<DriveFile>> GetByFolderIdsAsync(IEnumerable<Guid> folderIds)
+    {
+        var ids = folderIds.ToList();
+        return await dbContext
+            .DriveFiles.IgnoreQueryFilters()
+            .Include(f => f.Versions)
+            .Where(f => f.FolderId != null && ids.Contains(f.FolderId.Value))
+            .ToListAsync();
+    }
+
+    public void DeleteRange(IEnumerable<DriveFile> files) =>
+        dbContext.DriveFiles.RemoveRange(files);
+
     public async Task<IReadOnlyList<DriveFile>> GetStarredAsync() =>
         await dbContext.DriveFiles.Where(f => f.IsStarred).OrderBy(f => f.Name).ToListAsync();
 
@@ -82,6 +95,16 @@ public sealed class FileRepository(
 
     public async Task<long> GetTotalSizeAsync() => await dbContext.DriveFiles.SumAsync(f => f.Size);
 
-    public async Task<IReadOnlyList<DriveFile>> GetRecentAsync(int take) =>
-        await dbContext.DriveFiles.OrderByDescending(f => f.ModifiedAt).Take(take).ToListAsync();
+    public async Task<IReadOnlyList<DriveFile>> GetRecentAsync(int take, DateTime? after)
+    {
+        var query = dbContext.DriveFiles.AsQueryable();
+        if (after is not null)
+        {
+            query = query.Where(f => (f.LastAccessedAt ?? f.ModifiedAt) > after);
+        }
+        return await query
+            .OrderByDescending(f => f.LastAccessedAt ?? f.ModifiedAt)
+            .Take(take)
+            .ToListAsync();
+    }
 }

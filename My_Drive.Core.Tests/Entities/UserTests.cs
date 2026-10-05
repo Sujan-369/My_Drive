@@ -44,4 +44,12 @@ public class UserTests
         Assert.Equal("New Name", user.DisplayName);
         Assert.Equal("https://example.com/new.jpg", user.PictureUrl);
     }
+
+    [Fact]
+    public void ClearRecentHistory_SetsLastRecentClearedAt()
+    {
+        var user = new User(Guid.NewGuid(), "test@example.com", "Test User", "sub-123");
+        user.ClearRecentHistory();
+        Assert.NotNull(user.LastRecentClearedAt);
+    }
 }

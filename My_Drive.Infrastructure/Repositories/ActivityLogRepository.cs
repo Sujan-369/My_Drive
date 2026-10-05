@@ -13,9 +13,13 @@ public sealed class ActivityLogRepository(ApplicationDbContext dbContext) : IAct
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task<IReadOnlyList<ActivityLog>> GetRecentAsync(int take) =>
-        await dbContext.ActivityLogs
-            .OrderByDescending(l => l.CreatedAt)
-            .Take(take)
-            .ToListAsync();
+    public async Task<IReadOnlyList<ActivityLog>> GetRecentAsync(int take, DateTime? after)
+    {
+        var query = dbContext.ActivityLogs.AsQueryable();
+        if (after is not null)
+        {
+            query = query.Where(l => l.CreatedAt > after);
+        }
+        return await query.OrderByDescending(l => l.CreatedAt).Take(take).ToListAsync();
+    }
 }

@@ -11,8 +11,10 @@ public interface IFileRepository
     Task<IReadOnlyList<DriveFile>> GetDeletedAsync();
     Task<DriveFile?> GetDeletedByIdAsync(Guid id);
     Task DeletePermanentAsync(DriveFile file);
+    Task<IReadOnlyList<DriveFile>> GetByFolderIdsAsync(IEnumerable<Guid> folderIds);
+    void DeleteRange(IEnumerable<DriveFile> files);
     Task<IReadOnlyList<DriveFile>> GetStarredAsync();
     Task<long> GetTotalSizeAsync();
-    Task<IReadOnlyList<DriveFile>> GetRecentAsync(int take);
+    Task<IReadOnlyList<DriveFile>> GetRecentAsync(int take, DateTime? after);
     Task<IReadOnlyList<DriveFile>> SearchAsync(string term);
 }
