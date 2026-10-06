@@ -19,7 +19,7 @@ export function SettingsScreen({ auth, onBack, onSignOut }: SettingsScreenProps)
       </div>
 
       <div className="mx-auto w-full max-w-2xl space-y-6">
-        <div className="rounded-lg border p-6">
+        <div className="rounded-xl border p-6">
           <h3 className="mb-4 text-sm font-semibold text-foreground">Profile</h3>
           <div className="mb-4 flex items-center gap-3">
             {auth.pictureUrl ? (
@@ -39,7 +39,7 @@ export function SettingsScreen({ auth, onBack, onSignOut }: SettingsScreenProps)
           </p>
         </div>
 
-        <div className="rounded-lg border p-6">
+        <div className="rounded-xl border p-6">
           <h3 className="mb-1 text-sm font-semibold text-foreground">Account security</h3>
           <p className="mb-3 text-sm text-muted-foreground">
             This app uses Google Sign-In — there's no separate password to manage here. Change your password, review devices, or enable two-factor authentication directly through your Google Account.
@@ -56,7 +56,7 @@ export function SettingsScreen({ auth, onBack, onSignOut }: SettingsScreenProps)
           />
         </div>
 
-        <div className="rounded-lg border p-6">
+        <div className="rounded-xl border p-6">
           <h3 className="mb-1 text-sm font-semibold text-foreground">Sign out</h3>
           <p className="mb-3 text-sm text-muted-foreground">Sign out of My Drive on this device.</p>
           <Button variant="outline" onClick={onSignOut}>
