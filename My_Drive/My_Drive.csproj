@@ -19,7 +19,7 @@
       Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets"
       Version="1.24.1-preview.1"
     />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.17.13" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.17.14" />
   </ItemGroup>
 
   <ItemGroup>
