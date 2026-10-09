@@ -1,6 +1,5 @@
-import { apiClient } from '@/lib/apiClient';
+import { apiClient, API_BASE_URL } from '@/lib/apiClient';
 
-const API_BASE_URL = 'http://localhost:5271';
 
 export interface AuthResponse {
   token: string;

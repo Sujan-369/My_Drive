@@ -480,3 +480,8 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# My Drive deployment
+.env.production
+.az-env.ps1
+client/dist/
