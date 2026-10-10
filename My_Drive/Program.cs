@@ -35,16 +35,17 @@ namespace My_Drive
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
+            var allowedOrigins =
+                builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                ?? ["http://localhost:5173", "http://localhost:5174"];
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy(
                     "AllowReactClient",
                     policy =>
                     {
-                        policy
-                            .WithOrigins("http://localhost:5173", "http://localhost:5174")
-                            .AllowAnyHeader()
-                            .AllowAnyMethod();
+                        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod();
                     }
                 );
             });
@@ -101,6 +102,8 @@ namespace My_Drive
             var app = builder.Build();
 
             app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+            app.UseRouting();
 
             app.UseCors("AllowReactClient");
 
