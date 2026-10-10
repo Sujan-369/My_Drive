@@ -1,0 +1,9 @@
+**/bin
+**/obj
+**/node_modules
+**/.vs
+**/.vscode
+.vs
+.vscode
+.git
+client

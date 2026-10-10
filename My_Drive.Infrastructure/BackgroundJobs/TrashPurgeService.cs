@@ -9,7 +9,8 @@ namespace My_Drive.Infrastructure.BackgroundJobs;
 
 public sealed class TrashPurgeService(
     IServiceScopeFactory scopeFactory,
-    ILogger<TrashPurgeService> logger) : BackgroundService
+    ILogger<TrashPurgeService> logger
+) : BackgroundService
 {
     private static readonly TimeSpan Interval = TimeSpan.FromHours(24);
     private const int RetentionDays = 30;
@@ -18,7 +19,14 @@ public sealed class TrashPurgeService(
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await PurgeExpiredAsync(stoppingToken);
+            try
+            {
+                await PurgeExpiredAsync(stoppingToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogError(ex, "Trash purge failed; will retry on the next cycle");
+            }
             await Task.Delay(Interval, stoppingToken);
         }
     }
@@ -36,8 +44,8 @@ public sealed class TrashPurgeService(
         // No org filter here on purpose — this is a system-wide maintenance
         // job with no "current user," so it correctly purges every org's
         // expired trash, not just one.
-        var expiredFiles = await dbContext.DriveFiles
-            .IgnoreQueryFilters()
+        var expiredFiles = await dbContext
+            .DriveFiles.IgnoreQueryFilters()
             .Where(f => f.IsDeleted && f.DeletedAt < cutoff)
             .ToListAsync(cancellationToken);
 
@@ -50,8 +58,8 @@ public sealed class TrashPurgeService(
             dbContext.DriveFiles.Remove(file);
         }
 
-        var expiredFolders = await dbContext.Folders
-            .IgnoreQueryFilters()
+        var expiredFolders = await dbContext
+            .Folders.IgnoreQueryFilters()
             .Where(f => f.IsDeleted && f.DeletedAt < cutoff)
             .ToListAsync(cancellationToken);
         dbContext.Folders.RemoveRange(expiredFolders);
@@ -61,7 +69,9 @@ public sealed class TrashPurgeService(
             await dbContext.SaveChangesAsync(cancellationToken);
             logger.LogInformation(
                 "Trash purge removed {FileCount} files and {FolderCount} folders",
-                expiredFiles.Count, expiredFolders.Count);
+                expiredFiles.Count,
+                expiredFolders.Count
+            );
         }
     }
 }
