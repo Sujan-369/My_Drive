@@ -75,10 +75,80 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build image (validation only, not pushed anywhere)
-        run: docker build -f My_Drive/Dockerfile -t mydrive-api:ci .
+        run: docker build -f My_Drive/Dockerfile -t my-drive-api:validate .
 
-  # deploy:
-  #   Added in Sprint 6 once Azure resources (Container Registry,
-  #   Container App / VM Scale Set) actually exist. Needs: [backend, frontend, docker-validate].
-  #   Will build + push a tagged image, then deploy that exact tag —
-  #   not rebuild at deploy time — so what's tested is what ships.
+  deploy-api:
+    name: Deploy API to Container Apps
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend, frontend, docker-validate]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-api
+      cancel-in-progress: false
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      ACR_NAME: mydriveacrsujan282
+      RESOURCE_GROUP: my-drive-rg
+      CONTAINER_APP: my-drive-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push image (tagged with the commit SHA)
+        run: az acr build --registry $ACR_NAME --image my-drive-api:${{ github.sha }} --file My_Drive/Dockerfile .
+
+      - name: Roll out the new image
+        run: |
+          az containerapp update \
+            --name $CONTAINER_APP \
+            --resource-group $RESOURCE_GROUP \
+            --image $ACR_NAME.azurecr.io/my-drive-api:${{ github.sha }} \
+            --set-env-vars \
+              "Jwt__Issuer=my-drive-api" \
+              "Jwt__Audience=my-drive-client" \
+              "Google__ClientId=${{ vars.VITE_GOOGLE_CLIENT_ID }}" \
+              "Cors__AllowedOrigins__0=${{ vars.FRONTEND_ORIGIN }}"
+
+  deploy-frontend:
+    name: Deploy frontend to Static Web Apps
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend, frontend, docker-validate]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-frontend
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Build
+        working-directory: client
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload to Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: client/dist
+          skip_app_build: true
+          skip_api_build: true
