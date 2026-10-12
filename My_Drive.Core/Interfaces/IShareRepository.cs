@@ -15,4 +15,6 @@ public interface IShareRepository
         ShareResourceType resourceType,
         Guid resourceId
     );
+    Task<Share?> GetAsync(ShareResourceType resourceType, Guid resourceId, Guid sharedWithUserId);
+    Task SaveChangesAsync();
 }

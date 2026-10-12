@@ -9,4 +9,10 @@ public interface IPermissionService
         Guid resourceId,
         Guid resourceOrganizationId
     );
+
+    Task<bool> CanShareAsync(
+        ShareResourceType resourceType,
+        Guid resourceId,
+        Guid resourceOrganizationId
+    );
 }

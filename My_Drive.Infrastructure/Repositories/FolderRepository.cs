@@ -97,6 +97,26 @@ public sealed class FolderRepository(
         return result;
     }
 
+    // Walks up from the candidate via parent pointers: one cheap query per level,
+    // no org dependency, and the visited set guards against any pre-existing loop.
+    public async Task<bool> IsSelfOrDescendantAsync(Guid folderId, Guid candidateId)
+    {
+        var visited = new HashSet<Guid>();
+        Guid? currentId = candidateId;
+
+        while (currentId is { } id && visited.Add(id))
+        {
+            if (id == folderId)
+                return true;
+
+            currentId = await dbContext
+                .Folders.IgnoreQueryFilters()
+                .Where(f => f.Id == id)
+                .Select(f => f.ParentFolderId)
+                .FirstOrDefaultAsync();
+        }
+        return false;
+    }
     public void DeleteRange(IEnumerable<Folder> folders) => dbContext.Folders.RemoveRange(folders);
 
     public async Task<IReadOnlyList<Folder>> GetStarredAsync() =>

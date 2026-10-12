@@ -101,6 +101,17 @@ namespace My_Drive
 
             var app = builder.Build();
 
+            // Apply pending EF migrations before serving traffic. Fail fast: if this
+            // throws, the container exits and Container Apps surfaces it in the logs
+            // instead of running against a stale schema. EF 9+ takes a DB-level lock
+            // while migrating, so a second replica starting at the same time is safe.
+            if (app.Configuration.GetValue("Database:MigrateOnStartup", true))
+            {
+                using var scope = app.Services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                db.Database.Migrate();
+            }
+
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 
             app.UseRouting();

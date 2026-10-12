@@ -80,4 +80,22 @@ public class ShareTests
         );
         Assert.False(share.IsExpired);
     }
+
+    [Fact]
+    public void UpdatePermission_ChangesPermissionAndClearsExpiry()
+    {
+        var share = new Share(
+            ShareResourceType.File,
+            ResourceId,
+            SharedById,
+            SharedWithId,
+            SharePermission.Viewer,
+            DateTime.UtcNow.AddDays(-1)
+        );
+
+        share.UpdatePermission(SharePermission.Editor);
+
+        Assert.Equal(SharePermission.Editor, share.Permission);
+        Assert.False(share.IsExpired);
+    }
 }
