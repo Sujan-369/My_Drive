@@ -10,6 +10,7 @@ namespace My_Drive.Controllers;
 [Route("api/folders")]
 public sealed class FoldersController(
     IFolderRepository folderRepository,
+    IFolderService folderService,
     IFileRepository fileRepository,
     IBlobStorageService blobStorageService,
     ICurrentOrganizationProvider currentOrganizationProvider,
@@ -17,7 +18,7 @@ public sealed class FoldersController(
     IActivityLogger activityLogger,
     IPermissionService permissionService,
     IShareRepository shareRepository,
-    IUserRepository userRepository
+    IShareService shareService
 ) : ControllerBase
 {
     [HttpGet]
@@ -57,6 +58,10 @@ public sealed class FoldersController(
     [HttpPost]
     public async Task<ActionResult<FolderResponse>> Create([FromBody] CreateFolderRequest request)
     {
+        var container = await folderService.ValidateContainerAsync(request.ParentFolderId);
+        if (!container.IsOk)
+            return this.ToFailure(container);
+
         var folder = new Folder(
             currentOrganizationProvider.OrganizationId,
             currentUserProvider.UserId,
@@ -120,19 +125,9 @@ public sealed class FoldersController(
         )
             return Forbid();
 
-        if (request.NewParentFolderId is { } newParentId)
-        {
-            var newParent = await folderRepository.GetByIdAsync(newParentId);
-            if (newParent is null || newParent.OrganizationId != folder.OrganizationId)
-                return BadRequest(
-                    new { message = "The destination folder doesn't exist or isn't accessible." }
-                );
-
-            if (await folderRepository.IsSelfOrDescendantAsync(folder.Id, newParentId))
-                return BadRequest(
-                    new { message = "A folder can't be moved into itself or one of its subfolders." }
-                );
-        }
+        var check = await folderService.ValidateFolderMoveAsync(folder, request.NewParentFolderId);
+        if (!check.IsOk)
+            return this.ToFailure(check);
 
         folder.MoveTo(request.NewParentFolderId);
         await folderRepository.SaveChangesAsync();
@@ -274,60 +269,17 @@ public sealed class FoldersController(
         )
             return Forbid();
 
-        var recipient = await userRepository.GetByEmailAsync(request.RecipientEmail);
-        if (recipient is null)
-            return BadRequest("No user found with that email.");
-
-        if (
-            !Enum.TryParse<SharePermission>(
-                request.Permission,
-                ignoreCase: true,
-                out var permission
-            )
-        )
-        {
-            return BadRequest("Permission must be 'Viewer' or 'Editor'.");
-        }
-
-        var share = await shareRepository.GetAsync(
+        var grant = await shareService.GrantAsync(
             ShareResourceType.Folder,
             folder.Id,
-            recipient.Id
+            folder.Name,
+            request.RecipientEmail,
+            request.Permission
         );
-        if (share is null)
-        {
-            share = new Share(
-                ShareResourceType.Folder,
-                folder.Id,
-                currentUserProvider.UserId,
-                recipient.Id,
-                permission
-            );
-            await shareRepository.AddAsync(share);
-        }
-        else
-        {
-            share.UpdatePermission(permission);
-            await shareRepository.SaveChangesAsync();
-        }
+        if (!grant.Outcome.IsOk)
+            return this.ToFailure(grant.Outcome);
 
-        await activityLogger.LogAsync(
-            ActivityAction.Shared,
-            ActivityResourceType.Folder,
-            folder.Id,
-            folder.Name
-        );
-
-        return Ok(
-            new ShareResponse(
-                share.Id,
-                folder.Id,
-                "Folder",
-                request.RecipientEmail,
-                permission.ToString(),
-                share.CreatedAt
-            )
-        );
+        return Ok(grant.ToResponse(request.RecipientEmail));
     }
 
     private static FolderResponse ToResponse(Folder folder, bool isShared = false) =>

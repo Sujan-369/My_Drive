@@ -8,7 +8,9 @@ public sealed record ShareResponse(
     string ResourceType,
     string RecipientEmail,
     string Permission,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    bool Changed,
+    string? PreviousPermission
 );
 
 public sealed record SharedWithMeResponse(

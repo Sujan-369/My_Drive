@@ -12,13 +12,14 @@ namespace My_Drive.Controllers;
 [Route("api/files")]
 public sealed class FilesController(
     IFileRepository fileRepository,
-    IFolderRepository folderRepository,
+    IFolderService folderService,
     IBlobStorageService blobStorageService,
     ICurrentOrganizationProvider currentOrganizationProvider,
     ICurrentUserProvider currentUserProvider,
     IActivityLogger activityLogger,
     IPermissionService permissionService,
     IShareRepository shareRepository,
+    IShareService shareService,
     IUserRepository userRepository
 ) : ControllerBase
 {
@@ -70,14 +71,9 @@ public sealed class FilesController(
     [RequestSizeLimit(100_000_000)]
     public async Task<ActionResult<FileResponse>> Upload([FromForm] UploadFileRequest request)
     {
-        if (request.FolderId is not null)
-        {
-            var folder = await folderRepository.GetByIdAsync(request.FolderId.Value);
-            if (folder is null)
-            {
-                return BadRequest("The specified folder doesn't exist or isn't accessible.");
-            }
-        }
+        var container = await folderService.ValidateContainerAsync(request.FolderId);
+        if (!container.IsOk)
+            return this.ToFailure(container);
 
         var orgId = currentOrganizationProvider.OrganizationId;
         var extension = Path.GetExtension(request.File.FileName);
@@ -179,14 +175,9 @@ public sealed class FilesController(
         )
             return Forbid();
 
-        if (request.NewFolderId is { } newFolderId)
-        {
-            var destination = await folderRepository.GetByIdAsync(newFolderId);
-            if (destination is null || destination.OrganizationId != file.OrganizationId)
-                return BadRequest(
-                    new { message = "The destination folder doesn't exist or isn't accessible." }
-                );
-        }
+        var check = await folderService.ValidateFileMoveAsync(file, request.NewFolderId);
+        if (!check.IsOk)
+            return this.ToFailure(check);
 
         file.MoveTo(request.NewFolderId);
         await fileRepository.SaveChangesAsync();
@@ -316,56 +307,17 @@ public sealed class FilesController(
         )
             return Forbid();
 
-        var recipient = await userRepository.GetByEmailAsync(request.RecipientEmail);
-        if (recipient is null)
-            return BadRequest("No user found with that email.");
-
-        if (
-            !Enum.TryParse<SharePermission>(
-                request.Permission,
-                ignoreCase: true,
-                out var permission
-            )
-        )
-        {
-            return BadRequest("Permission must be 'Viewer' or 'Editor'.");
-        }
-
-        var share = await shareRepository.GetAsync(ShareResourceType.File, file.Id, recipient.Id);
-        if (share is null)
-        {
-            share = new Share(
-                ShareResourceType.File,
-                file.Id,
-                currentUserProvider.UserId,
-                recipient.Id,
-                permission
-            );
-            await shareRepository.AddAsync(share);
-        }
-        else
-        {
-            share.UpdatePermission(permission);
-            await shareRepository.SaveChangesAsync();
-        }
-
-        await activityLogger.LogAsync(
-            ActivityAction.Shared,
-            ActivityResourceType.File,
+        var grant = await shareService.GrantAsync(
+            ShareResourceType.File,
             file.Id,
-            file.Name
+            file.Name,
+            request.RecipientEmail,
+            request.Permission
         );
+        if (!grant.Outcome.IsOk)
+            return this.ToFailure(grant.Outcome);
 
-        return Ok(
-            new ShareResponse(
-                share.Id,
-                file.Id,
-                "File",
-                request.RecipientEmail,
-                permission.ToString(),
-                share.CreatedAt
-            )
-        );
+        return Ok(grant.ToResponse(request.RecipientEmail));
     }
 
     [HttpGet("{id:guid}/detail")]

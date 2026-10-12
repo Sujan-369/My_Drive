@@ -272,10 +272,19 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
       {moveTarget && (
         <MoveDialog
           open
-          onOpenChange={(open) => !open && setMoveTarget(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setMoveTarget(null);
+              moveFolder.reset();
+              moveFile.reset();
+            }
+          }}
           itemName={moveTarget.name}
+          currentFolderId={currentFolderId}
+          excludeFolderId={moveTarget.type === 'folders' ? moveTarget.id : undefined}
           onMove={handleMove}
           isPending={moveFolder.isPending || moveFile.isPending}
+          error={moveFolder.error?.message || moveFile.error?.message}
         />
       )}
     </div>
