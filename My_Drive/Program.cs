@@ -95,6 +95,10 @@ namespace My_Drive
 
             builder.Services.AddScoped<IPermissionService, PermissionService>();
 
+            builder.Services.AddScoped<IFolderService, FolderService>();
+
+            builder.Services.AddScoped<IShareService, ShareService>();
+
             builder.Services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
 
             builder.Services.AddHostedService<TrashPurgeService>();

@@ -12,6 +12,7 @@ const actionLabels: Record<string, string> = {
   Restored: 'Restored',
   Starred: 'Starred',
   Unstarred: 'Unstarred',
+  Shared: 'Shared',
 };
 
 function formatTime(iso: string): string {
