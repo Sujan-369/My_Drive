@@ -120,6 +120,20 @@ public sealed class FoldersController(
         )
             return Forbid();
 
+        if (request.NewParentFolderId is { } newParentId)
+        {
+            var newParent = await folderRepository.GetByIdAsync(newParentId);
+            if (newParent is null || newParent.OrganizationId != folder.OrganizationId)
+                return BadRequest(
+                    new { message = "The destination folder doesn't exist or isn't accessible." }
+                );
+
+            if (await folderRepository.IsSelfOrDescendantAsync(folder.Id, newParentId))
+                return BadRequest(
+                    new { message = "A folder can't be moved into itself or one of its subfolders." }
+                );
+        }
+
         folder.MoveTo(request.NewParentFolderId);
         await folderRepository.SaveChangesAsync();
         await activityLogger.LogAsync(
@@ -251,6 +265,14 @@ public sealed class FoldersController(
         var folder = await folderRepository.GetByIdAsync(id);
         if (folder is null)
             return NotFound();
+        if (
+            !await permissionService.CanShareAsync(
+                ShareResourceType.Folder,
+                folder.Id,
+                folder.OrganizationId
+            )
+        )
+            return Forbid();
 
         var recipient = await userRepository.GetByEmailAsync(request.RecipientEmail);
         if (recipient is null)
@@ -267,14 +289,28 @@ public sealed class FoldersController(
             return BadRequest("Permission must be 'Viewer' or 'Editor'.");
         }
 
-        var share = new Share(
+        var share = await shareRepository.GetAsync(
             ShareResourceType.Folder,
             folder.Id,
-            currentUserProvider.UserId,
-            recipient.Id,
-            permission
+            recipient.Id
         );
-        await shareRepository.AddAsync(share);
+        if (share is null)
+        {
+            share = new Share(
+                ShareResourceType.Folder,
+                folder.Id,
+                currentUserProvider.UserId,
+                recipient.Id,
+                permission
+            );
+            await shareRepository.AddAsync(share);
+        }
+        else
+        {
+            share.UpdatePermission(permission);
+            await shareRepository.SaveChangesAsync();
+        }
+
         await activityLogger.LogAsync(
             ActivityAction.Shared,
             ActivityResourceType.Folder,

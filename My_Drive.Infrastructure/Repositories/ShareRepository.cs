@@ -14,6 +14,21 @@ public sealed class ShareRepository(ApplicationDbContext dbContext) : IShareRepo
         await dbContext.SaveChangesAsync();
     }
 
+    // Deliberately no expiry filter: an expired row still occupies the unique
+    // (resource, recipient) slot, so we must find it to update it.
+    public async Task<Share?> GetAsync(
+        ShareResourceType resourceType,
+        Guid resourceId,
+        Guid sharedWithUserId
+    ) =>
+        await dbContext.Shares.FirstOrDefaultAsync(s =>
+            s.ResourceType == resourceType
+            && s.ResourceId == resourceId
+            && s.SharedWithUserId == sharedWithUserId
+        );
+
+    public async Task SaveChangesAsync() => await dbContext.SaveChangesAsync();
+
     public async Task<HashSet<Guid>> GetSharedResourceIdsAsync(
         Guid sharedByUserId,
         ShareResourceType resourceType

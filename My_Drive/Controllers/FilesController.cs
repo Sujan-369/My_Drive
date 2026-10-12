@@ -179,6 +179,15 @@ public sealed class FilesController(
         )
             return Forbid();
 
+        if (request.NewFolderId is { } newFolderId)
+        {
+            var destination = await folderRepository.GetByIdAsync(newFolderId);
+            if (destination is null || destination.OrganizationId != file.OrganizationId)
+                return BadRequest(
+                    new { message = "The destination folder doesn't exist or isn't accessible." }
+                );
+        }
+
         file.MoveTo(request.NewFolderId);
         await fileRepository.SaveChangesAsync();
         await activityLogger.LogAsync(
@@ -298,6 +307,14 @@ public sealed class FilesController(
         var file = await fileRepository.GetByIdAsync(id);
         if (file is null)
             return NotFound();
+        if (
+            !await permissionService.CanShareAsync(
+                ShareResourceType.File,
+                file.Id,
+                file.OrganizationId
+            )
+        )
+            return Forbid();
 
         var recipient = await userRepository.GetByEmailAsync(request.RecipientEmail);
         if (recipient is null)
@@ -314,14 +331,24 @@ public sealed class FilesController(
             return BadRequest("Permission must be 'Viewer' or 'Editor'.");
         }
 
-        var share = new Share(
-            ShareResourceType.File,
-            file.Id,
-            currentUserProvider.UserId,
-            recipient.Id,
-            permission
-        );
-        await shareRepository.AddAsync(share);
+        var share = await shareRepository.GetAsync(ShareResourceType.File, file.Id, recipient.Id);
+        if (share is null)
+        {
+            share = new Share(
+                ShareResourceType.File,
+                file.Id,
+                currentUserProvider.UserId,
+                recipient.Id,
+                permission
+            );
+            await shareRepository.AddAsync(share);
+        }
+        else
+        {
+            share.UpdatePermission(permission);
+            await shareRepository.SaveChangesAsync();
+        }
+
         await activityLogger.LogAsync(
             ActivityAction.Shared,
             ActivityResourceType.File,

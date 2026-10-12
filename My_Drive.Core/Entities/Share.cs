@@ -25,6 +25,14 @@ public sealed class Share
 
     public bool IsExpired => ExpiresAt is not null && ExpiresAt < DateTime.UtcNow;
 
+    // Re-granting an existing (resource, recipient) pair updates it in place.
+    // Clears any expiry, since a fresh grant shouldn't inherit an old deadline.
+    public void UpdatePermission(SharePermission permission)
+    {
+        Permission = permission;
+        ExpiresAt = null;
+    }
+
     private Share() { }
 
     public Share(

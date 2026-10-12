@@ -33,4 +33,13 @@ public sealed class PermissionService(
             && (s.ExpiresAt == null || s.ExpiresAt > DateTime.UtcNow)
         );
     }
+
+    // Only the owning org can grant access. Editors can modify content but cannot
+    // widen who has access. To follow Google Drive's default (editors can share),
+    // change this to `return CanEditAsync(resourceType, resourceId, resourceOrganizationId);`
+    public Task<bool> CanShareAsync(
+        ShareResourceType resourceType,
+        Guid resourceId,
+        Guid resourceOrganizationId
+    ) => Task.FromResult(resourceOrganizationId == currentOrganizationProvider.OrganizationId);
 }

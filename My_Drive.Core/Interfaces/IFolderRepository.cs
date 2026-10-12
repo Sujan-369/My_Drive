@@ -15,4 +15,7 @@ public interface IFolderRepository
     void DeleteRange(IEnumerable<Folder> folders);
     Task<IReadOnlyList<Folder>> GetStarredAsync();
     Task<IReadOnlyList<Folder>> SearchAsync(string term);
+
+    /// <summary>True if candidateId is folderId itself or anywhere inside its subtree.</summary>
+    Task<bool> IsSelfOrDescendantAsync(Guid folderId, Guid candidateId);
 }
