@@ -75,7 +75,7 @@ public sealed class FilesController(
         var container = await folderService.ValidateContainerAsync(request.FolderId);
         if (!container.IsOk)
             return this.ToFailure(container);
-        
+
         var capacity = await storageQuotaService.EnsureCapacityAsync(request.File.Length);
         if (!capacity.IsOk)
             return this.ToFailure(capacity);

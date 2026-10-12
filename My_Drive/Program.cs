@@ -104,7 +104,7 @@ namespace My_Drive
                     builder.Configuration.GetValue("Storage:OrgQuotaBytes", 1_073_741_824L)
                 )
             );
-            
+
             builder.Services.AddScoped<IStorageQuotaService, StorageQuotaService>();
 
             builder.Services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
