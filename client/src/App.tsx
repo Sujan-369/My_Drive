@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { setUnauthorizedHandler } from './lib/apiClient';
 import { AnimatePresence, motion } from 'motion/react';
 import { SignInScreen } from './features/auth/SignInScreen';
 import { AppShell } from './components/AppShell';
@@ -28,12 +30,27 @@ function isTokenExpired(token: string): boolean {
 }
 
 function App() {
+  const queryClient = useQueryClient();
   const [auth, setAuth] = useState<AuthState>('loading');
   const [view, setView] = useState<View>(() => (sessionStorage.getItem('view') as View) || 'home');
   const [searchQuery, setSearchQuery] = useState(() => sessionStorage.getItem('searchQuery') || '');
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const resetSession = useCallback(() => {
+    localStorage.removeItem('auth_token');
+    queryClient.clear();
+    setPreviewFileId(null);
+    setShowSettings(false);
+    setAuth(null);
+  }, [queryClient]);
+
+  // Any 401 on an authenticated request (expired or revoked token) signs the user out.
+  useEffect(() => {
+    setUnauthorizedHandler(resetSession);
+    return () => setUnauthorizedHandler(null);
+  }, [resetSession]);
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -57,11 +74,6 @@ function App() {
   const handleSignedIn = (result: AuthResponse) => {
     setAuth(result);
     localStorage.setItem('auth_token', result.token);
-  };
-
-  const handleSignOut = () => {
-    localStorage.removeItem('auth_token');
-    setAuth(null);
   };
 
   const handleNavigate = (next: View) => {
@@ -122,7 +134,7 @@ function App() {
                 <Sidebar activeView={view} onNavigate={handleNavigate} isMobileOpen={isMobileMenuOpen} onMobileClose={() => setIsMobileMenuOpen(false)} />
                 <div className="min-w-0 flex-1 overflow-y-auto py-6 md:py-8">
                   {showSettings ? (
-                    <SettingsScreen auth={auth} onBack={() => setShowSettings(false)} onSignOut={handleSignOut} />
+                    <SettingsScreen auth={auth} onBack={() => setShowSettings(false)} onSignOut={resetSession} />
                   ) : previewFileId ? (
                     <PreviewScreen fileId={previewFileId} onBack={() => setPreviewFileId(null)} />
                   ) : (

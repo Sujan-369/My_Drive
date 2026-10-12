@@ -5,6 +5,7 @@ public enum ServiceStatus
     Ok,
     Invalid,
     Forbidden,
+    QuotaExceeded
 }
 
 public sealed record ServiceResult(ServiceStatus Status, string? Message = null)
@@ -17,4 +18,6 @@ public sealed record ServiceResult(ServiceStatus Status, string? Message = null)
 
     public static ServiceResult Forbidden(string? message = null) =>
         new(ServiceStatus.Forbidden, message);
+    public static ServiceResult QuotaExceeded(string message) =>
+        new(ServiceStatus.QuotaExceeded, message);
 }

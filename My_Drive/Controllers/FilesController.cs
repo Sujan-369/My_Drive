@@ -20,6 +20,7 @@ public sealed class FilesController(
     IPermissionService permissionService,
     IShareRepository shareRepository,
     IShareService shareService,
+    IStorageQuotaService storageQuotaService,
     IUserRepository userRepository
 ) : ControllerBase
 {
@@ -74,6 +75,10 @@ public sealed class FilesController(
         var container = await folderService.ValidateContainerAsync(request.FolderId);
         if (!container.IsOk)
             return this.ToFailure(container);
+        
+        var capacity = await storageQuotaService.EnsureCapacityAsync(request.File.Length);
+        if (!capacity.IsOk)
+            return this.ToFailure(capacity);
 
         var orgId = currentOrganizationProvider.OrganizationId;
         var extension = Path.GetExtension(request.File.FileName);

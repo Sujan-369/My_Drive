@@ -14,6 +14,10 @@ internal static class ServiceResultExtensions
                 StatusCodes.Status403Forbidden,
                 new { message = result.Message ?? "You don't have permission to do that." }
             ),
+            ServiceStatus.QuotaExceeded => controller.StatusCode(
+                StatusCodes.Status413PayloadTooLarge,
+                new { message = result.Message }
+            ),
             _ => controller.StatusCode(StatusCodes.Status500InternalServerError),
         };
 

@@ -95,6 +95,11 @@ public sealed class FileRepository(
 
     public async Task<long> GetTotalSizeAsync() => await dbContext.DriveFiles.SumAsync(f => f.Size);
 
+    public async Task<long> GetTotalSizeIncludingTrashAsync() =>
+    await dbContext
+        .DriveFiles.IgnoreQueryFilters()
+        .Where(f => f.OrganizationId == currentOrganizationProvider.OrganizationId)
+        .SumAsync(f => f.Size);
     public async Task<IReadOnlyList<DriveFile>> GetRecentAsync(int take, DateTime? after)
     {
         var query = dbContext.DriveFiles.AsQueryable();

@@ -74,11 +74,12 @@ public abstract class ApiTestBase(ApiFactory factory)
     protected static Task<HttpResponseMessage> UploadAsync(
         TestUser user,
         Guid? folderId,
-        string fileName = "hello.txt"
+        string fileName = "hello.txt",
+        int sizeBytes = 5
     )
     {
         var form = new MultipartFormDataContent();
-        var file = new ByteArrayContent("hello"u8.ToArray());
+        var file = new ByteArrayContent(new byte[sizeBytes]);
         file.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
         form.Add(file, "File", fileName);
         if (folderId is { } id)
