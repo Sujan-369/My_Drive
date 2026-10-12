@@ -99,6 +99,14 @@ namespace My_Drive
 
             builder.Services.AddScoped<IShareService, ShareService>();
 
+            builder.Services.AddSingleton(
+                new StorageQuotaOptions(
+                    builder.Configuration.GetValue("Storage:OrgQuotaBytes", 1_073_741_824L)
+                )
+            );
+
+            builder.Services.AddScoped<IStorageQuotaService, StorageQuotaService>();
+
             builder.Services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
 
             builder.Services.AddHostedService<TrashPurgeService>();

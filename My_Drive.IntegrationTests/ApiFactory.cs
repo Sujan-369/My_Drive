@@ -29,6 +29,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         Environment.SetEnvironmentVariable("Jwt__Issuer", "my-drive-tests");
         Environment.SetEnvironmentVariable("Jwt__Audience", "my-drive-tests-client");
         Environment.SetEnvironmentVariable("Google__ClientId", "test-client-id");
+        Environment.SetEnvironmentVariable("Storage__OrgQuotaBytes", "5000");
         Environment.SetEnvironmentVariable(
             "Azure__BlobStorageConnectionString",
             "UseDevelopmentStorage=true"

@@ -156,6 +156,7 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
           {uploadFile.isPending ? 'Uploading...' : 'Upload File'}
         </Button>
         <input ref={fileInputRef} type="file" onChange={handleFileSelected} className="hidden" />
+          {uploadFile.isError && <span className="text-sm text-destructive">{uploadFile.error.message}</span>}
         <NewFolderDialog
           onCreate={(name, options) => createFolder.mutate(name, options)}
           isPending={createFolder.isPending}

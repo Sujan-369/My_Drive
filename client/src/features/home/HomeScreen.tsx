@@ -66,7 +66,11 @@ export function HomeScreen({ auth, onOpenPreview }: HomeScreenProps) {
         >
           <UploadCloud className="mb-1 size-5 text-primary" />
           <div className="text-sm font-medium">
-            {uploadFile.isPending ? 'Uploading...' : 'Drag and drop files, or click to browse'}
+            {uploadFile.isPending
+              ? 'Uploading...'
+              : uploadFile.isError
+                ? uploadFile.error.message
+                : 'Drag and drop files, or click to browse'}
           </div>
           <input
             ref={fileInputRef}

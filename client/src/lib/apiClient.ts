@@ -10,6 +10,13 @@ export class ApiError extends Error {
   }
 }
 
+let onUnauthorized: (() => void) | null = null;
+
+/** Registered by the app shell so any 401 on an authenticated request signs the user out. */
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  onUnauthorized = handler;
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('auth_token');
   const headers = new Headers(options.headers);
@@ -22,6 +29,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+
+  if (response.status === 401 && token) onUnauthorized?.();
 
   if (!response.ok) {
     let message = `Request failed: ${response.status}`;
@@ -47,6 +56,7 @@ async function requestBlob(path: string): Promise<Blob> {
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
   const response = await fetch(`${API_BASE_URL}${path}`, { headers });
+  if (response.status === 401 && token) onUnauthorized?.();
   if (!response.ok) {
     throw new ApiError(response.status, `Download failed: ${response.status}`);
   }

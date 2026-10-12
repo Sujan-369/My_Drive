@@ -17,4 +17,5 @@ public interface IFileRepository
     Task<long> GetTotalSizeAsync();
     Task<IReadOnlyList<DriveFile>> GetRecentAsync(int take, DateTime? after);
     Task<IReadOnlyList<DriveFile>> SearchAsync(string term);
+    Task<long> GetTotalSizeIncludingTrashAsync();
 }
