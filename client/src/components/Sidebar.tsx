@@ -1,4 +1,5 @@
 import { Home, FolderOpen, Users, Clock, Star, Trash2, X } from 'lucide-react';
+import { Logo } from '@/components/Logo';
 
 export type View = 'home' | 'my-drive' | 'recent' | 'search' | 'trash' | 'starred' | 'shared';
 
@@ -32,23 +33,38 @@ export function Sidebar({ activeView, onNavigate, isMobileOpen, onMobileClose }:
 
   return (
     <>
-      {isMobileOpen && <div className="fixed inset-0 z-40 bg-black/60 md:hidden" onClick={onMobileClose} />}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden" onClick={onMobileClose} aria-hidden="true" />
+      )}
 
       <nav
-        className={`fixed inset-y-0 left-0 z-50 w-60 shrink-0 border-r border-border bg-sidebar px-3 py-4 transition-transform duration-200 md:static md:z-auto md:translate-x-0 ${
-          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+        aria-label="Primary"
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-border bg-sidebar px-3 py-4 shadow-2xl transition-[transform,visibility] duration-200 md:static md:visible md:z-auto md:w-60 md:translate-x-0 md:bg-transparent md:shadow-none ${
+          isMobileOpen ? 'translate-x-0' : 'invisible -translate-x-full'
         }`}
       >
-        <button onClick={onMobileClose} className="mb-4 flex size-8 items-center justify-center rounded-md hover:bg-white/5 md:hidden">
-          <X className="size-4" />
-        </button>
+        <div className="mb-5 flex items-center justify-between px-1 md:hidden">
+          <div className="flex items-center gap-2.5">
+            <Logo className="size-8" />
+            <span className="font-semibold tracking-tight">My Drive</span>
+          </div>
+          <button
+            onClick={onMobileClose}
+            aria-label="Close navigation menu"
+            className="-mr-1 flex size-10 items-center justify-center rounded-md hover:bg-white/5"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
         {navItems.map((item) => {
           const isActive = item.view === activeView;
           return (
             <button
               key={item.label}
               onClick={() => handleNavigate(item.view)}
-              className={`relative mb-0.5 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+              aria-current={isActive ? 'page' : undefined}
+              className={`relative mb-0.5 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors md:py-2 ${
                 isActive ? 'bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
               }`}
             >
