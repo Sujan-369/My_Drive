@@ -10,22 +10,25 @@ interface RowActionsProps {
   onDownload?: () => void;
 }
 
+// Menu items are taller on touch screens so they're easy to hit.
+const item = 'py-2.5 sm:py-1.5';
+
 export function RowActions({ onShare, onRename, onMove, onDelete, onDownload }: RowActionsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="icon" className="size-11 sm:size-9" aria-label="More actions" onClick={(e) => e.stopPropagation()}>
             <MoreVertical className="size-4 text-muted-foreground" />
           </Button>
         }
       />
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onRename}><Pencil className="size-4" />Rename</DropdownMenuItem>
-        <DropdownMenuItem onClick={onMove}><FolderInput className="size-4" />Move</DropdownMenuItem>
-        <DropdownMenuItem onClick={onShare}><Share2 className="size-4" />Share</DropdownMenuItem>
-        {onDownload && <DropdownMenuItem onClick={onDownload}><Download className="size-4" />Download</DropdownMenuItem>}
-        <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive"><Trash2 className="size-4" />Delete</DropdownMenuItem>
+        <DropdownMenuItem className={item} onClick={onRename}><Pencil className="size-4" />Rename</DropdownMenuItem>
+        <DropdownMenuItem className={item} onClick={onMove}><FolderInput className="size-4" />Move</DropdownMenuItem>
+        <DropdownMenuItem className={item} onClick={onShare}><Share2 className="size-4" />Share</DropdownMenuItem>
+        {onDownload && <DropdownMenuItem className={item} onClick={onDownload}><Download className="size-4" />Download</DropdownMenuItem>}
+        <DropdownMenuItem onClick={onDelete} className={`${item} text-destructive focus:text-destructive`}><Trash2 className="size-4" />Delete</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -22,6 +22,8 @@ const sortLabels: Record<SortKey, string> = { name: 'Name', modified: 'Last modi
 const listVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.03 } } };
 const itemVariants = { hidden: { opacity: 0, y: 4 }, visible: { opacity: 1, y: 0 } };
 const DRAG_HOLD_MS = 150;
+// Press-and-hold drag is a mouse interaction; on touch it fights with scrolling.
+const canDrag = typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches;
 
 export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbEntry[]>([{ id: null, name: 'My Drive' }]);
@@ -63,11 +65,13 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
     }),
     [files, sortKey]
   );
-  const hasContent = sortedFolders.length > 0 || sortedFiles.length > 0;
+  const itemCount = sortedFolders.length + sortedFiles.length;
+  const hasContent = itemCount > 0;
 
   const navigateInto = (id: string, name: string) => setBreadcrumbs((prev) => [...prev, { id, name }]);
   const navigateToBreadcrumb = (index: number) => setBreadcrumbs((prev) => prev.slice(0, index + 1));
   const startHold = (id: string) => {
+    if (!canDrag) return;
     holdTimerRef.current = setTimeout(() => setDraggableId(id), DRAG_HOLD_MS);
   };
   const cancelHold = () => {
@@ -125,9 +129,11 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
     setDropTargetId(undefined);
   };
 
+  const starButton = 'size-11 sm:size-9';
+
   return (
     <div>
-      <nav className="mb-4 flex items-center gap-1 text-sm text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
         {breadcrumbs.map((crumb, index) => {
           const isAncestor = index < breadcrumbs.length - 1;
           const dropKey = crumb.id ?? 'root';
@@ -139,9 +145,9 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                 onDragOver={isAncestor ? (e) => { e.preventDefault(); setDropTargetId(dropKey); } : undefined}
                 onDragLeave={isAncestor ? () => setDropTargetId((c) => (c === dropKey ? undefined : c)) : undefined}
                 onDrop={isAncestor ? (e) => { e.preventDefault(); handleDrop(crumb.id); } : undefined}
-                className={`rounded px-1.5 py-0.5 transition-colors ${
+                className={`rounded px-1.5 py-1 transition-colors ${
                   dropTargetId === dropKey ? 'bg-primary/10 text-primary ring-1 ring-inset ring-primary' : 'hover:bg-white/5 hover:text-foreground'
-                }`}
+                } ${!isAncestor ? 'font-medium text-foreground' : ''}`}
               >
                 {crumb.name}
               </button>
@@ -150,20 +156,30 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
         })}
       </nav>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <Button onClick={() => fileInputRef.current?.click()} disabled={uploadFile.isPending}>
           <Upload className="size-4" />
           {uploadFile.isPending ? 'Uploading...' : 'Upload File'}
         </Button>
         <input ref={fileInputRef} type="file" onChange={handleFileSelected} className="hidden" />
-          {uploadFile.isError && <span className="text-sm text-destructive">{uploadFile.error.message}</span>}
         <NewFolderDialog
           onCreate={(name, options) => createFolder.mutate(name, options)}
           isPending={createFolder.isPending}
           error={createFolder.error?.message}
         />
+      </div>
+      {uploadFile.isError && (
+        <p role="alert" className="mb-3 text-sm text-destructive">{uploadFile.error.message}</p>
+      )}
+
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="text-xs text-muted-foreground">
+          {isLoading ? '' : `${itemCount} ${itemCount === 1 ? 'item' : 'items'}`}
+        </span>
         <Select value={sortKey} onValueChange={(value) => setSortKey(value as SortKey)}>
-          <SelectTrigger className="ml-auto w-40"><SelectValue>{sortLabels[sortKey]}</SelectValue></SelectTrigger>
+          <SelectTrigger size="sm" className="w-40" aria-label="Sort by">
+            <SelectValue>{`Sort: ${sortLabels[sortKey]}`}</SelectValue>
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="name">Name</SelectItem>
             <SelectItem value="modified">Last modified</SelectItem>
@@ -172,14 +188,23 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
         </Select>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border">
+      <div className="overflow-hidden rounded-xl border border-border bg-card/40">
         {isLoading && (
           <div className="divide-y divide-border">
-            {[1, 2, 3].map((i) => <div key={i} className="flex items-center gap-3 px-4 py-3"><Skeleton className="size-5 rounded" /><Skeleton className="h-4 w-40" /></div>)}
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3.5">
+                <Skeleton className="size-5 shrink-0 rounded" />
+                <Skeleton className="h-4 w-2/5" />
+              </div>
+            ))}
           </div>
         )}
         {!isLoading && !hasContent && (
-          <div className="px-4 py-16 text-center"><Folder className="mx-auto mb-3 size-8 text-muted-foreground/50" /><p className="text-sm text-muted-foreground">This folder is empty.</p></div>
+          <div className="px-6 py-14 text-center">
+            <Folder className="mx-auto mb-3 size-8 text-muted-foreground/50" />
+            <p className="text-sm font-medium">This folder is empty</p>
+            <p className="mt-1 text-sm text-muted-foreground">Upload a file or create a folder to get started.</p>
+          </div>
         )}
         {!isLoading && hasContent && (
           <motion.div className="divide-y divide-border" variants={listVariants} initial="hidden" animate="visible">
@@ -196,19 +221,26 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                   onDragLeave={() => setDropTargetId((c) => (c === folder.id ? undefined : c))}
                   onDrop={(e) => { e.preventDefault(); handleDrop(folder.id); }}
                   onClick={(e) => { if (e.target === e.currentTarget) navigateInto(folder.id, folder.name); }}
-                  className={`group relative flex items-center gap-3 px-4 py-3 transition-colors ${
+                  className={`group relative flex items-center gap-3 py-1.5 pl-4 pr-2 transition-colors sm:py-2.5 ${
                     draggableId === folder.id ? 'cursor-grab active:cursor-grabbing' : ''
                   } ${
                     dropTargetId === folder.id ? 'bg-primary/10 ring-1 ring-inset ring-primary' : 'hover:bg-white/3'
                   } ${draggedItem?.id === folder.id ? 'opacity-40' : ''}`}
                 >
                   <span className="absolute inset-y-0 left-0 w-0.5 bg-primary opacity-0 transition-opacity group-hover:opacity-100" />
-                  <button onClick={() => navigateInto(folder.id, folder.name)} className={`flex min-w-0 flex-1 items-center gap-3 text-left ${draggableId === folder.id ? 'cursor-grab active:cursor-grabbing' : ''}`}>
+                  <button onClick={() => navigateInto(folder.id, folder.name)} className={`flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left ${draggableId === folder.id ? 'cursor-grab active:cursor-grabbing' : ''}`}>
                     <Folder className="size-5 shrink-0 text-muted-foreground" />
                     <span className="truncate">{folder.name}</span>
                   </button>
                   {folder.isShared && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Shared</span>}
-                  <Button variant="ghost" size="icon" onClick={() => toggleStarFolder.mutate({ id: folder.id, starred: folder.isStarred })}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={starButton}
+                    aria-label={folder.isStarred ? `Remove star from ${folder.name}` : `Star ${folder.name}`}
+                    aria-pressed={folder.isStarred}
+                    onClick={() => toggleStarFolder.mutate({ id: folder.id, starred: folder.isStarred })}
+                  >
                     <Star className={`size-4 ${folder.isStarred ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
                   </Button>
                   <RowActions
@@ -230,16 +262,26 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
                   onDragStart={() => setDraggedItem({ type: 'files', id: file.id, name: file.name })}
                   onDragEnd={() => { setDraggedItem(null); setDropTargetId(undefined); cancelHold(); }}
                   onClick={(e) => { if (e.target === e.currentTarget) onOpenPreview(file.id); }}
-                  className={`group relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/3 ${
+                  className={`group relative flex items-center gap-3 py-1.5 pl-4 pr-2 transition-colors hover:bg-white/3 sm:py-2.5 ${
                     draggableId === file.id ? 'cursor-grab active:cursor-grabbing' : ''
                   } ${draggedItem?.id === file.id ? 'opacity-40' : ''}`}
                 >
                   <span className="absolute inset-y-0 left-0 w-0.5 bg-primary opacity-0 transition-opacity group-hover:opacity-100" />
                   <FileText className="size-5 shrink-0 text-muted-foreground" />
-                  <button onClick={() => onOpenPreview(file.id)} className={`min-w-0 flex-1 truncate text-left text-sm ${draggableId === file.id ? 'cursor-grab active:cursor-grabbing' : ''}`}>{file.name}</button>
+                  <button onClick={() => onOpenPreview(file.id)} className={`min-h-11 min-w-0 flex-1 text-left ${draggableId === file.id ? 'cursor-grab active:cursor-grabbing' : ''}`}>
+                    <span className="block truncate text-sm">{file.name}</span>
+                    <span className="block text-xs text-muted-foreground sm:hidden">{formatSize(file.size)}</span>
+                  </button>
                   {file.isShared && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Shared</span>}
                   <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">{formatSize(file.size)}</span>
-                  <Button variant="ghost" size="icon" onClick={() => toggleStarFile.mutate({ id: file.id, starred: file.isStarred })}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={starButton}
+                    aria-label={file.isStarred ? `Remove star from ${file.name}` : `Star ${file.name}`}
+                    aria-pressed={file.isStarred}
+                    onClick={() => toggleStarFile.mutate({ id: file.id, starred: file.isStarred })}
+                  >
                     <Star className={`size-4 ${file.isStarred ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
                   </Button>
                   <RowActions

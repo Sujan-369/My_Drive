@@ -16,6 +16,7 @@ import { SearchScreen } from './features/search/SearchScreen';
 import { SharedWithMeScreen } from './features/sharing/SharedWithMeScreen';
 import { PreviewScreen } from './features/preview/PreviewScreen';
 import { SettingsScreen } from './features/settings/SettingsScreen';
+import { AmbientBackground, useAmbientScroll } from './components/AmbientBackground';
 
 type AuthState = 'loading' | AuthResponse | null;
 
@@ -37,6 +38,7 @@ function App() {
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const handleAmbientScroll = useAmbientScroll();
 
   const resetSession = useCallback(() => {
     localStorage.removeItem('auth_token');
@@ -121,6 +123,7 @@ function App() {
         </motion.div>
       ) : (
         <motion.div key="app" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
+          <AmbientBackground />
           <AppShell
               userName={auth.displayName}
               userEmail={auth.email}
@@ -132,7 +135,7 @@ function App() {
             >
               <div className="flex flex-1 gap-6 overflow-hidden">
                 <Sidebar activeView={view} onNavigate={handleNavigate} isMobileOpen={isMobileMenuOpen} onMobileClose={() => setIsMobileMenuOpen(false)} />
-                <div className="min-w-0 flex-1 overflow-y-auto py-6 md:py-8">
+                <div onScroll={handleAmbientScroll} className="min-w-0 flex-1 overflow-y-auto pb-10 pt-6 md:pb-12 md:pt-8">
                   {showSettings ? (
                     <SettingsScreen auth={auth} onBack={() => setShowSettings(false)} onSignOut={resetSession} />
                   ) : previewFileId ? (

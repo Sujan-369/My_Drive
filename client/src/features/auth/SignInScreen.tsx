@@ -1,7 +1,10 @@
+import { motion } from 'motion/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AmbientBackground } from '@/components/AmbientBackground';
+import { Logo } from '@/components/Logo';
 import { GoogleSignInButton } from './GoogleSignInButton';
 import type { AuthResponse } from './authApi';
-import { HardDrive, ShieldCheck, FolderSearch, Users } from 'lucide-react';
+import { ShieldCheck, FolderSearch, Users } from 'lucide-react';
 
 interface SignInScreenProps {
   onSignedIn: (auth: AuthResponse) => void;
@@ -15,18 +18,23 @@ const features = [
 
 export function SignInScreen({ onSignedIn }: SignInScreenProps) {
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden px-5 py-10">
+      <AmbientBackground />
       <div
         className="pointer-events-none absolute left-1/2 top-1/3 h-150 w-150 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-20 blur-[120px]"
         style={{ background: 'radial-gradient(circle, var(--primary) 0%, transparent 70%)' }}
       />
 
-      <div className="relative w-full max-w-sm">
-        <Card className="border-border bg-card">
-          <CardHeader className="items-center text-center">
-            <div className="mb-3 flex size-14 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/20">
-              <HardDrive className="size-7 text-primary-foreground" />
-            </div>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="relative w-full max-w-sm"
+      >
+        <Card className="border-border bg-card/80 backdrop-blur">
+          {/* CardHeader is a grid, so centering needs justify-items, not just items. */}
+          <CardHeader className="items-center justify-items-center text-center">
+            <Logo className="mb-3 size-14 drop-shadow-[0_8px_24px_rgba(244,63,94,0.35)]" />
             <CardTitle className="text-2xl">My Drive</CardTitle>
             <CardDescription>Store, organize, and access anywhere.</CardDescription>
           </CardHeader>
@@ -35,16 +43,18 @@ export function SignInScreen({ onSignedIn }: SignInScreenProps) {
           </CardContent>
         </Card>
 
-        <div className="mt-8 grid grid-cols-3 gap-4">
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
           {features.map((feature) => (
-            <div key={feature.title} className="text-center">
-              <feature.icon className="mx-auto mb-2 size-5 text-primary" />
-              <div className="text-xs font-medium">{feature.title}</div>
-              <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{feature.description}</div>
+            <div key={feature.title} className="flex items-start gap-3 sm:block sm:text-center">
+              <feature.icon className="size-5 shrink-0 text-primary sm:mx-auto sm:mb-2" />
+              <div>
+                <div className="text-xs font-medium">{feature.title}</div>
+                <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{feature.description}</div>
+              </div>
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
