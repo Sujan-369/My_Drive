@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Mvc;
+using My_Drive.Core.Models;
+using My_Drive.Filters;
 using My_Drive.Auth;
 using My_Drive.Core.Interfaces;
 using My_Drive.Core.Services;
@@ -26,11 +30,27 @@ namespace My_Drive
 
             // Add services to the container.
 
-            builder.Services.AddControllers(options =>
-            {
-                var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
-                options.Filters.Add(new AuthorizeFilter(policy));
-            });
+            builder
+                .Services.AddControllers(options =>
+                {
+                    var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+                    options.Filters.Add(new AuthorizeFilter(policy));
+                })
+                .ConfigureApiBehaviorOptions(options =>
+                {
+                    // One error shape for every API failure: { message }. Binding errors would
+                    // otherwise come back as ProblemDetails, which the client can't display.
+                    options.InvalidModelStateResponseFactory = context =>
+                    {
+                        var message = context
+                            .ModelState.Values.SelectMany(v => v.Errors)
+                            .Select(e => e.ErrorMessage)
+                            .FirstOrDefault(m => !string.IsNullOrWhiteSpace(m));
+                        return new BadRequestObjectResult(
+                            new { message = message ?? "The request was invalid." }
+                        );
+                    };
+                });
 
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
@@ -106,6 +126,24 @@ namespace My_Drive
             );
 
             builder.Services.AddScoped<IStorageQuotaService, StorageQuotaService>();
+
+            var uploadOptions = new UploadPolicyOptions(
+    builder.Configuration.GetValue("Upload:MaxFileBytes", 104_857_600L),
+    (
+        builder.Configuration.GetSection("Upload:BlockedExtensions").Get<string[]>()
+        ?? [".exe", ".msi", ".bat", ".cmd", ".com", ".scr", ".dll", ".vbs", ".ps1", ".jar"]
+    )
+        .Select(e => e.Trim().ToLowerInvariant())
+        .Select(e => e.StartsWith('.') ? e : "." + e)
+        .ToHashSet()
+);
+            builder.Services.AddSingleton(uploadOptions);
+            builder.Services.AddSingleton<IUploadPolicy, UploadPolicy>();
+            builder.Services.AddScoped<UploadSizeFilter>();
+            builder.Services.Configure<FormOptions>(options =>
+                options.MultipartBodyLengthLimit =
+                    uploadOptions.MaxFileBytes + UploadSizeFilter.OverheadBytes
+            );
 
             builder.Services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
 

@@ -9,7 +9,8 @@ namespace My_Drive.Controllers;
 [Route("api/organizations")]
 public sealed class OrganizationsController(
     IFileRepository fileRepository,
-    StorageQuotaOptions quota
+    StorageQuotaOptions quota,
+    IUploadPolicy uploadPolicy
 ) : ControllerBase
 {
     [HttpGet("storage-usage")]
@@ -19,4 +20,13 @@ public sealed class OrganizationsController(
         var totalBytes = await fileRepository.GetTotalSizeIncludingTrashAsync();
         return Ok(new StorageUsageResponse(totalBytes, quota.LimitBytes));
     }
+
+    [HttpGet("upload-policy")]
+    public ActionResult<UploadPolicyResponse> GetUploadPolicy() =>
+        Ok(
+            new UploadPolicyResponse(
+                uploadPolicy.Options.MaxFileBytes,
+                [.. uploadPolicy.Options.BlockedExtensions.Order()]
+            )
+        );
 }

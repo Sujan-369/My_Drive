@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Input } from '@/components/ui/input';
 import { Logo } from '@/components/Logo';
-import { Search, Menu } from 'lucide-react';
+import { Search, Menu, X } from 'lucide-react';
 
 interface AppShellProps {
   userName: string;
@@ -45,10 +45,20 @@ export function AppShell({
             <Input
               value={searchValue}
               onChange={(e) => onSearch(e.target.value)}
+              onKeyDown={(e) => e.key === 'Escape' && onSearch('')}
               placeholder="Search files and folders..."
               aria-label="Search files and folders"
-              className="pl-9"
+              className="pl-9 pr-9"
             />
+            {searchValue && (
+              <button
+                onClick={() => onSearch('')}
+                aria-label="Clear search"
+                className="absolute right-2 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-white/10 hover:text-foreground"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
           </div>
 
           <button

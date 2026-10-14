@@ -18,6 +18,14 @@ internal static class ServiceResultExtensions
                 StatusCodes.Status413PayloadTooLarge,
                 new { message = result.Message }
             ),
+            ServiceStatus.TooLarge => controller.StatusCode(
+                StatusCodes.Status413PayloadTooLarge,
+                new { message = result.Message }
+            ),
+            ServiceStatus.UnsupportedType => controller.StatusCode(
+                StatusCodes.Status415UnsupportedMediaType,
+                new { message = result.Message }
+            ),
             _ => controller.StatusCode(StatusCodes.Status500InternalServerError),
         };
 
