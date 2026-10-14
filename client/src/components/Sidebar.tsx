@@ -1,5 +1,7 @@
 import { Home, FolderOpen, Users, Clock, Star, Trash2, X } from 'lucide-react';
 import { Logo } from '@/components/Logo';
+import { useStorageUsage } from '@/features/organization/useOrganization';
+import { formatBytes } from '@/lib/formatBytes';
 
 export type View = 'home' | 'my-drive' | 'recent' | 'search' | 'trash' | 'starred' | 'shared';
 
@@ -26,6 +28,11 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeView, onNavigate, isMobileOpen, onMobileClose }: SidebarProps) {
+  const { data: usage } = useStorageUsage();
+  const used = usage?.totalBytes ?? 0;
+  const limit = usage?.limitBytes ?? 0;
+  const percent = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
+  const nearLimit = percent >= 90;
   const handleNavigate = (view: View) => {
     onNavigate(view);
     onMobileClose();
@@ -74,6 +81,28 @@ export function Sidebar({ activeView, onNavigate, isMobileOpen, onMobileClose }:
             </button>
           );
         })}
+
+        <div className="mt-auto px-1 pt-4">
+          <div className="rounded-lg border border-border bg-card/50 p-3">
+            <div className="mb-2 text-xs text-muted-foreground">Storage</div>
+            <div
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(percent)}
+              aria-label="Storage used"
+              className="h-1.5 overflow-hidden rounded-full bg-muted"
+            >
+              <div
+                className={`h-full rounded-full transition-[width] duration-500 ${nearLimit ? 'bg-destructive' : 'bg-primary'}`}
+                style={{ width: `${used > 0 ? Math.max(percent, 2) : 0}%` }}
+              />
+            </div>
+            <p className={`mt-2 text-xs ${nearLimit ? 'text-destructive' : 'text-muted-foreground'}`}>
+              {usage ? `${formatBytes(used)} of ${formatBytes(limit)} used` : 'Calculating…'}
+            </p>
+          </div>
+        </div>
       </nav>
     </>
   );

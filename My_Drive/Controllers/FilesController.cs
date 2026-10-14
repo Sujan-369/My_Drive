@@ -5,6 +5,7 @@ using My_Drive.Contracts.Files;
 using My_Drive.Contracts.Sharing;
 using My_Drive.Core.Entities;
 using My_Drive.Core.Interfaces;
+using My_Drive.Filters;
 
 namespace My_Drive.Controllers;
 
@@ -21,6 +22,7 @@ public sealed class FilesController(
     IShareRepository shareRepository,
     IShareService shareService,
     IStorageQuotaService storageQuotaService,
+    IUploadPolicy uploadPolicy,
     IUserRepository userRepository
 ) : ControllerBase
 {
@@ -69,9 +71,13 @@ public sealed class FilesController(
     }
 
     [HttpPost]
-    [RequestSizeLimit(100_000_000)]
+    [ServiceFilter(typeof(UploadSizeFilter))]
     public async Task<ActionResult<FileResponse>> Upload([FromForm] UploadFileRequest request)
     {
+        var policy = uploadPolicy.Validate(request.File.FileName, request.File.Length);
+        if (!policy.IsOk)
+            return this.ToFailure(policy);
+
         var container = await folderService.ValidateContainerAsync(request.FolderId);
         if (!container.IsOk)
             return this.ToFailure(container);
@@ -92,8 +98,7 @@ public sealed class FilesController(
         var contentHash = Convert.ToHexString(await SHA256.HashDataAsync(buffered));
         buffered.Position = 0;
 
-        await blobStorageService.UploadAsync(buffered, blobPath, request.File.ContentType);
-
+        // Constructing the entity validates the name, so do it before touching blob storage.
         var file = new DriveFile(
             orgId,
             currentUserProvider.UserId,
@@ -103,7 +108,18 @@ public sealed class FilesController(
             request.File.Length,
             contentHash
         );
-        await fileRepository.AddAsync(file);
+
+        await blobStorageService.UploadAsync(buffered, blobPath, request.File.ContentType);
+        try
+        {
+            await fileRepository.AddAsync(file);
+        }
+        catch
+        {
+            await blobStorageService.DeleteAsync(blobPath);
+            throw;
+        }
+
         await activityLogger.LogAsync(
             ActivityAction.Uploaded,
             ActivityResourceType.File,

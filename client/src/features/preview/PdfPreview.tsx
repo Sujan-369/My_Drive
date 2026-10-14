@@ -13,6 +13,8 @@ const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.25;
 // iOS Safari silently fails to draw canvases above ~16.7M pixels.
 const MAX_CANVAS_PIXELS = 16_000_000;
+// While zooming, wait for the user to settle before re-rendering sharp.
+const ZOOM_SETTLE_MS = 120;
 
 const clampZoom = (value: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
 
@@ -25,17 +27,17 @@ export function PdfPreview({ fileId }: PdfPreviewProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
+  const renderedZoomRef = useRef(1);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ distance: number; zoom: number } | null>(null);
-  const pinchScaleRef = useRef(1);
 
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasRendered, setHasRendered] = useState(false);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageNum, setPageNum] = useState(1);
-  const [zoom, setZoom] = useState(1); // 1 = fit to width
-  const [pinchScale, setPinchScale] = useState(1); // live visual scale while pinching
+  const [zoom, setZoom] = useState(1); // target zoom; 1 = fit to width
+  const [renderedZoom, setRenderedZoom] = useState(1); // zoom the canvas was last drawn at
   const [stageWidth, setStageWidth] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -52,6 +54,8 @@ export function PdfPreview({ fileId }: PdfPreviewProps) {
     setHasRendered(false);
     setPageNum(1);
     setZoom(1);
+    setRenderedZoom(1);
+    renderedZoomRef.current = 1;
 
     (async () => {
       try {
@@ -95,8 +99,9 @@ export function PdfPreview({ fileId }: PdfPreviewProps) {
     if (!pdf || stageWidth === 0) return;
     let cancelled = false;
     setPageLoading(true);
+    const delay = zoom !== renderedZoomRef.current ? ZOOM_SETTLE_MS : 0;
 
-    (async () => {
+    const timer = setTimeout(async () => {
       renderTaskRef.current?.cancel();
       try {
         const page = await pdf.getPage(pageNum);
@@ -112,17 +117,26 @@ export function PdfPreview({ fileId }: PdfPreviewProps) {
         let outputScale = Math.min(window.devicePixelRatio || 1, 3);
         const pixels = cssViewport.width * cssViewport.height * outputScale * outputScale;
         if (pixels > MAX_CANVAS_PIXELS) outputScale *= Math.sqrt(MAX_CANVAS_PIXELS / pixels);
-
         const viewport = page.getViewport({ scale: cssScale * outputScale });
-        canvas.width = Math.floor(viewport.width);
-        canvas.height = Math.floor(viewport.height);
-        canvas.style.width = `${Math.floor(cssViewport.width)}px`;
-        canvas.style.height = `${Math.floor(cssViewport.height)}px`;
 
-        const task = page.render({ canvas, viewport });
+        // Render off-screen, then swap in one frame, so zooming never flashes a blank page.
+        const offscreen = document.createElement('canvas');
+        offscreen.width = Math.floor(viewport.width);
+        offscreen.height = Math.floor(viewport.height);
+        const task = page.render({ canvas: offscreen, viewport });
         renderTaskRef.current = task;
         await task.promise;
-        if (!cancelled) setHasRendered(true);
+        if (cancelled) return;
+
+        canvas.width = offscreen.width;
+        canvas.height = offscreen.height;
+        canvas.style.width = `${Math.floor(cssViewport.width)}px`;
+        canvas.style.height = `${Math.floor(cssViewport.height)}px`;
+        canvas.getContext('2d')?.drawImage(offscreen, 0, 0);
+
+        renderedZoomRef.current = zoom;
+        setRenderedZoom(zoom);
+        setHasRendered(true);
       } catch (err) {
         // A cancelled render throws too; that's expected when a newer request supersedes it.
         const isCancellation = err instanceof Error && err.name === 'RenderingCancelledException';
@@ -133,10 +147,11 @@ export function PdfPreview({ fileId }: PdfPreviewProps) {
       } finally {
         if (!cancelled) setPageLoading(false);
       }
-    })();
+    }, delay);
 
     return () => {
       cancelled = true;
+      clearTimeout(timer);
       renderTaskRef.current?.cancel();
     };
   }, [pdf, pageNum, zoom, stageWidth]);
@@ -147,21 +162,39 @@ export function PdfPreview({ fileId }: PdfPreviewProps) {
     return () => document.removeEventListener('fullscreenchange', handleChange);
   }, []);
 
+  // Ctrl+wheel (and trackpad pinch, which browsers report the same way) zooms the document
+  // instead of the whole page. It has to be a non-passive listener to call preventDefault.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setZoom((z) => clampZoom(z * Math.exp(-e.deltaY * 0.002)));
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
   const goPrev = useCallback(() => setPageNum((n) => Math.max(1, n - 1)), []);
   const goNext = useCallback(() => setPageNum((n) => Math.min(pageCount, n + 1)), [pageCount]);
-  const zoomIn = () => setZoom((z) => clampZoom(Math.round((z + ZOOM_STEP) * 100) / 100));
-  const zoomOut = () => setZoom((z) => clampZoom(Math.round((z - ZOOM_STEP) * 100) / 100));
+  const zoomIn = useCallback(() => setZoom((z) => clampZoom(Math.round((z + ZOOM_STEP) * 100) / 100)), []);
+  const zoomOut = useCallback(() => setZoom((z) => clampZoom(Math.round((z - ZOOM_STEP) * 100) / 100)), []);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const target = e.target;
       if (target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return; // leave browser shortcuts alone
       if (e.key === 'ArrowLeft') goPrev();
       if (e.key === 'ArrowRight') goNext();
+      if (e.key === '+' || e.key === '=') zoomIn();
+      if (e.key === '-') zoomOut();
+      if (e.key === '0') setZoom(1);
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [goPrev, goNext]);
+  }, [goPrev, goNext, zoomIn, zoomOut]);
 
   const toggleFullscreen = () => {
     if (document.fullscreenElement) {
@@ -171,8 +204,7 @@ export function PdfPreview({ fileId }: PdfPreviewProps) {
     }
   };
 
-  // Pinch-to-zoom: scale the canvas live with a CSS transform, then commit the new
-  // zoom (and re-render crisply) when the second finger lifts.
+  // Pinch-to-zoom: two pointers drive the same zoom state as the buttons and the wheel.
   const pointerDistance = () => {
     const [a, b] = [...pointersRef.current.values()];
     return Math.hypot(a.x - b.x, a.y - b.y);
@@ -188,21 +220,12 @@ export function PdfPreview({ fileId }: PdfPreviewProps) {
     pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const pinch = pinchRef.current;
     if (!pinch || pointersRef.current.size !== 2) return;
-    const next = clampZoom(pinch.zoom * (pointerDistance() / pinch.distance)) / pinch.zoom;
-    pinchScaleRef.current = next;
-    setPinchScale(next);
+    setZoom(clampZoom(pinch.zoom * (pointerDistance() / pinch.distance)));
   };
 
   const endPointer = (e: React.PointerEvent) => {
     pointersRef.current.delete(e.pointerId);
-    const pinch = pinchRef.current;
-    if (pinch && pointersRef.current.size < 2) {
-      const committed = clampZoom(pinch.zoom * pinchScaleRef.current);
-      pinchRef.current = null;
-      pinchScaleRef.current = 1;
-      setPinchScale(1);
-      setZoom(Math.round(committed * 100) / 100);
-    }
+    if (pointersRef.current.size < 2) pinchRef.current = null;
   };
 
   const hideControls = isFullscreen && isIdle;
@@ -271,7 +294,8 @@ export function PdfPreview({ fileId }: PdfPreviewProps) {
               aria-label={`PDF page ${pageNum} of ${pageCount}`}
               className={`mx-auto block rounded shadow-sm ${hasRendered ? '' : 'hidden'}`}
               style={{
-                transform: pinchScale !== 1 ? `scale(${pinchScale})` : undefined,
+                // Until the sharp render lands, show the old one scaled to the target zoom.
+                transform: zoom !== renderedZoom ? `scale(${zoom / renderedZoom})` : undefined,
                 transformOrigin: 'top center',
               }}
             />

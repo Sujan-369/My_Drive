@@ -1,7 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { useFolders, useCreateFolder, useDeleteFolder, useToggleStarFolder, useRenameFolder, useMoveFolder } from '../folders/useFolders';
-import { useFiles, useUploadFile, useDeleteFile, useToggleStarFile, useRenameFile, useMoveFile } from './useFiles';
+import { useFiles, useUploadFiles, useDeleteFile, useToggleStarFile, useRenameFile, useMoveFile } from './useFiles';
+import { useFileDrop } from './useFileDrop';
+import { DropOverlay } from './DropOverlay';
+import { UploadErrors } from './UploadErrors';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
@@ -41,7 +44,8 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
   const { data: folders, isLoading: foldersLoading } = useFolders(currentFolderId);
   const { data: files, isLoading: filesLoading } = useFiles(currentFolderId);
   const createFolder = useCreateFolder(currentFolderId);
-  const uploadFile = useUploadFile(currentFolderId);
+  const uploader = useUploadFiles(currentFolderId);
+  const drop = useFileDrop((files) => void uploader.uploadAll(files));
   const deleteFolder = useDeleteFolder(currentFolderId);
   const deleteFile = useDeleteFile(currentFolderId);
   const toggleStarFolder = useToggleStarFolder(currentFolderId);
@@ -80,9 +84,9 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
     setDraggableId(null);
   };
 
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) uploadFile.mutate(file);
+  const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files ?? []);
+    if (selected.length > 0) void uploader.uploadAll(selected);
     e.target.value = '';
   };
 
@@ -132,7 +136,8 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
   const starButton = 'size-11 sm:size-9';
 
   return (
-    <div>
+    <div {...drop.props} className="relative min-h-full">
+      {drop.isDragging && <DropOverlay />}
       <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
         {breadcrumbs.map((crumb, index) => {
           const isAncestor = index < breadcrumbs.length - 1;
@@ -157,20 +162,18 @@ export function FileBrowser({ onOpenPreview }: FileBrowserProps) {
       </nav>
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Button onClick={() => fileInputRef.current?.click()} disabled={uploadFile.isPending}>
+        <Button onClick={() => fileInputRef.current?.click()} disabled={uploader.isPending}>
           <Upload className="size-4" />
-          {uploadFile.isPending ? 'Uploading...' : 'Upload File'}
+          {uploader.isPending ? 'Uploading...' : 'Upload File'}
         </Button>
-        <input ref={fileInputRef} type="file" onChange={handleFileSelected} className="hidden" />
+        <input ref={fileInputRef} type="file" multiple onChange={handleFilesSelected} className="hidden" />
         <NewFolderDialog
           onCreate={(name, options) => createFolder.mutate(name, options)}
           isPending={createFolder.isPending}
           error={createFolder.error?.message}
         />
       </div>
-      {uploadFile.isError && (
-        <p role="alert" className="mb-3 text-sm text-destructive">{uploadFile.error.message}</p>
-      )}
+      <UploadErrors errors={uploader.errors} onDismiss={uploader.clearErrors} />
 
       <div className="mb-2 flex items-center justify-between gap-3">
         <span className="text-xs text-muted-foreground">

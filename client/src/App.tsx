@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { setUnauthorizedHandler } from './lib/apiClient';
 import { AnimatePresence, motion } from 'motion/react';
@@ -78,9 +78,13 @@ function App() {
     localStorage.setItem('auth_token', result.token);
   };
 
+  // The screen to return to when a search is cleared.
+  const lastViewRef = useRef<View>('home');
+
   const handleNavigate = (next: View) => {
     setPreviewFileId(null);
     setShowSettings(false);
+    setSearchQuery('');
     setView(next);
   };
 
@@ -88,7 +92,12 @@ function App() {
     setPreviewFileId(null);
     setShowSettings(false);
     setSearchQuery(query);
-    setView('search');
+    if (query.trim()) {
+      if (view !== 'search') lastViewRef.current = view;
+      setView('search');
+    } else if (view === 'search') {
+      setView(lastViewRef.current);
+    }
   };
 
   const handleOpenSettings = () => {

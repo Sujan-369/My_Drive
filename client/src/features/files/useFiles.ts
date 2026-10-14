@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { filesApi } from './filesApi';
 import type { FileResponse } from './filesApi';
+import { useState } from 'react';
+import { checkUpload } from './uploadPolicy';
 
 export function useFiles(folderId: string | null) {
   return useQuery({
@@ -20,9 +22,42 @@ export function useFileStarred() {
 export function useUploadFile(folderId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (file: File) => filesApi.upload(file, folderId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['files', folderId] }),
+    mutationFn: async (file: File) => {
+      const problem = await checkUpload(queryClient, file);
+      if (problem) throw new Error(problem);
+      return filesApi.upload(file, folderId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['files'] });
+      queryClient.invalidateQueries({ queryKey: ['organization'] });
+      queryClient.invalidateQueries({ queryKey: ['activity'] });
+    },
   });
+}
+
+/** Uploads several files one after another and reports every failure, not just the last. */
+export function useUploadFiles(folderId: string | null) {
+  const upload = useUploadFile(folderId);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [isPending, setIsPending] = useState(false);
+
+  const uploadAll = async (files: File[]) => {
+    setErrors([]);
+    setIsPending(true);
+    const failures: string[] = [];
+    for (const file of files) {
+      try {
+        await upload.mutateAsync(file);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Upload failed.';
+        failures.push(message.includes(file.name) ? message : `${file.name}: ${message}`);
+      }
+    }
+    setErrors(failures);
+    setIsPending(false);
+  };
+
+  return { uploadAll, isPending, errors, clearErrors: () => setErrors([]) };
 }
 
 export function useDeleteFile(folderId: string | null) {
@@ -64,7 +99,10 @@ export function usePermanentDeleteFile() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => filesApi.deletePermanent(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['files', 'trash'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['files', 'trash'] });
+      queryClient.invalidateQueries({ queryKey: ['organization'] });
+    },
   });
 }
 
