@@ -61,10 +61,10 @@ export function HomeScreen({ auth, onOpenPreview }: HomeScreenProps) {
     <div {...drop.props} className="relative min-h-full">
       {drop.isDragging && <DropOverlay hint={limitHint} />}
 
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Welcome back, {firstName}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Pick up where you left off.</p>
+      <header className="mb-8 grid grid-cols-2 items-center gap-3 sm:gap-6">
+        <div className="min-w-0">
+          <h1 className="text-base font-semibold leading-tight tracking-tight sm:text-2xl">Welcome back, {firstName}</h1>
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Pick up where you left off.</p>
         </div>
 
         <div
@@ -78,23 +78,23 @@ export function HomeScreen({ auth, onOpenPreview }: HomeScreenProps) {
           role="button"
           tabIndex={0}
           aria-label="Upload files"
-          className={`flex w-full items-center gap-3 rounded-xl border border-dashed border-border px-4 py-3 text-left transition-colors hover:border-primary/50 hover:bg-white/2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-80 ${
+          className={`flex min-w-0 items-center gap-2 rounded-xl border border-dashed border-border px-3 py-2.5 text-left transition-colors hover:border-primary/50 hover:bg-white/2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-3 sm:px-4 sm:py-3 ${
             uploader.isPending ? 'pointer-events-none opacity-70' : 'cursor-pointer'
           }`}
         >
-          <UploadCloud className="size-6 shrink-0 text-primary" />
-          <div className="min-w-0">
-            <div className="text-sm font-medium">
+          <UploadCloud className="size-5 shrink-0 text-primary sm:size-6" />
+          <div className="min-w-0 leading-tight">
+            <div className="text-xs font-medium sm:text-sm">
               {uploader.isPending ? (
                 'Uploading...'
               ) : (
                 <>
                   <span className="hidden md:inline">Drag and drop files, or click to browse</span>
-                  <span className="md:hidden">Tap to upload files</span>
+                  <span className="md:hidden">Tap to upload</span>
                 </>
               )}
             </div>
-            {limitHint && <div className="text-xs text-muted-foreground">{limitHint}</div>}
+            {limitHint && <div className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">{limitHint}</div>}
           </div>
         </div>
         <input
