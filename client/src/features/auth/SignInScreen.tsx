@@ -21,7 +21,7 @@ export function SignInScreen({ onSignedIn }: SignInScreenProps) {
     <div className="relative flex min-h-dvh items-center justify-center overflow-hidden px-5 py-10">
       <AmbientBackground />
       <div
-        className="pointer-events-none absolute left-1/2 top-1/3 h-150 w-150 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-20 blur-[120px]"
+        className="pointer-events-none absolute left-1/2 top-1/3 h-150 w-150 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-20"
         style={{ background: 'radial-gradient(circle, var(--primary) 0%, transparent 70%)' }}
       />
 
@@ -31,7 +31,7 @@ export function SignInScreen({ onSignedIn }: SignInScreenProps) {
         transition={{ duration: 0.4, ease: 'easeOut' }}
         className="relative w-full max-w-sm"
       >
-        <Card className="border-border bg-card/80 backdrop-blur">
+        <Card className="border-border bg-card">
           {/* CardHeader is a grid, so centering needs justify-items, not just items. */}
           <CardHeader className="items-center justify-items-center text-center">
             <Logo className="mb-3 size-14 drop-shadow-[0_8px_24px_rgba(244,63,94,0.35)]" />
